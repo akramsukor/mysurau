@@ -3,21 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase.js';
 
 /* ─── Action metadata ─── */
+// Keyed by pending_approval.action — only these three values appear in the queue.
 const ACTION_META = {
-  request_add:    { label: 'User add',              cls: 'dash-chip--blue'  },
-  request_change: { label: 'User change request',   cls: 'dash-chip--amber' },
-  request_delete: { label: 'User delete request',   cls: 'dash-chip--red'   },
-  user_change:    { label: 'User edit (unapproved)', cls: 'dash-chip--grey'  },
-  user_delete:    { label: 'User delete (unapproved)', cls: 'dash-chip--grey' },
+  request_add:    { label: 'Add request',    cls: 'dash-chip--blue'  },
+  request_change: { label: 'Change request', cls: 'dash-chip--amber' },
+  request_delete: { label: 'Delete request', cls: 'dash-chip--red'   },
 };
 
 const FILTER_OPTIONS = [
-  { value: '',               label: 'All actions'              },
-  { value: 'request_add',    label: 'User add'                 },
-  { value: 'request_change', label: 'User change request'      },
-  { value: 'request_delete', label: 'User delete request'      },
-  { value: 'user_change',    label: 'User edit (unapproved)'   },
-  { value: 'user_delete',    label: 'User delete (unapproved)' },
+  { value: '',               label: 'All actions'    },
+  { value: 'request_add',    label: 'Add request'    },
+  { value: 'request_change', label: 'Change request' },
+  { value: 'request_delete', label: 'Delete request' },
 ];
 
 /* ─── Helpers ─── */
@@ -65,7 +62,7 @@ export default function Queue() {
           id, created_at, surau_id, action, user_email, surau_name,
           category, friday_prayer, public_access, location, status, address,
           image_1, image_2, image_3, image_4, reason,
-          pending_approval!inner(id),
+          pending_approval!inner(id, action),
           surau(name)
         `)
         .order('created_at', { ascending: false })
@@ -79,7 +76,8 @@ export default function Queue() {
   }, []);
 
   const filtered = useMemo(() => rows.filter(row => {
-    if (actionFilter && row.action !== actionFilter) return false;
+    const pendingAction = row.pending_approval[0]?.action;
+    if (actionFilter && pendingAction !== actionFilter) return false;
     if (search && !getSurauName(row).toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   }), [rows, actionFilter, search]);
@@ -187,7 +185,8 @@ export default function Queue() {
             </thead>
             <tbody>
               {filtered.map(row => {
-                const meta  = ACTION_META[row.action] ?? { label: row.action, cls: 'dash-chip--grey' };
+                const pendingAction = row.pending_approval[0]?.action;
+                const meta  = ACTION_META[pendingAction] ?? { label: pendingAction, cls: 'dash-chip--grey' };
                 const name  = getSurauName(row);
                 const email = row.user_email ?? '—';
                 return (
