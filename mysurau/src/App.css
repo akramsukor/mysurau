@@ -354,21 +354,15 @@ body {
 }
 
 .search-panel__handle {
-  display: flex; justify-content: center; align-items: center;
-  padding: 14px 0 10px;
-  cursor: grab; flex-shrink: 0;
-  user-select: none; -webkit-user-select: none;
-}
-
-.search-panel__handle:active {
-  cursor: grabbing;
+  display: flex; justify-content: center;
+  padding: 10px 0 6px;
+  cursor: pointer; flex-shrink: 0;
 }
 
 .search-panel__handle-bar {
   width: 40px; height: 4px;
   background: var(--border);
   border-radius: 2px;
-  pointer-events: none;
 }
 
 /* Search input */
@@ -622,19 +616,6 @@ body {
 .zone-item__name { font-size: 0.82rem; flex: 1; }
 
 .zone-item__check { color: var(--green-700); font-weight: 800; font-size: 1rem; }
-
-/* ─────────────────── Location banner ─────────────────── */
-.location-banner {
-  position: absolute;
-  top: 8px; left: 12px; right: 12px;
-  background: #E65100; color: white;
-  padding: 10px 14px; border-radius: var(--radius-sm);
-  font-size: 0.82rem;
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 8px;
-  z-index: 600;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.25);
-}
 
 /* ─────────────────── Error banner ─────────────────── */
 .error-banner {

@@ -21,7 +21,7 @@ export default function App() {
 
   const [loadingLocation, setLoadingLocation] = useState(true);
   const [loadingSurau, setLoadingSurau] = useState(false);
-  const [locationError, setLocationError] = useState(null); // 'denied' | 'unavailable' | 'timeout' | null
+
 
   const [selectedSurau, setSelectedSurau] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -101,16 +101,13 @@ export default function App() {
         loadSurau(coords.lat, coords.lon);
       },
       (err) => {
-        console.warn('Geolocation error:', err.code, err.message);
-        if (err.code === 1) setLocationError('denied');
-        else if (err.code === 2) setLocationError('unavailable');
-        else setLocationError('timeout');
+        console.warn('Geolocation denied:', err.message);
         setLocationName('Kuala Lumpur');
         setLoadingLocation(false);
         loadSurau(DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lon);
         loadPrayerTimes('WLY01');
       },
-      { enableHighAccuracy: true, timeout: 20000, maximumAge: 60000 }
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 }
     );
   }, [loadSurau, loadPrayerTimes]);
 
@@ -122,15 +119,10 @@ export default function App() {
         const coords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
         setUserLocation(coords);
         setMapCenter({ ...coords, _ts: Date.now() }); // force recenter
-        setLocationError(null);
         loadSurau(coords.lat, coords.lon);
       },
-      (err) => {
-        if (err.code === 1) setLocationError('denied');
-        else if (err.code === 2) setLocationError('unavailable');
-        else setLocationError('timeout');
-      },
-      { enableHighAccuracy: true, timeout: 12000 }
+      () => {},
+      { enableHighAccuracy: true, timeout: 8000 }
     );
   };
 
@@ -183,20 +175,6 @@ export default function App() {
           onLocateMe={handleLocateMe}
         />
       </div>
-
-      {/* Location permission banner */}
-      {locationError && (
-        <div className="location-banner">
-          <span>
-            {locationError === 'denied'
-              ? 'Akses lokasi ditolak. Benarkan akses lokasi dalam tetapan pelayar anda, kemudian tekan 📍.'
-              : locationError === 'unavailable'
-              ? 'Lokasi tidak dapat dikesan. Menunjukkan Kuala Lumpur sebagai lalai.'
-              : 'Masa mencari lokasi tamat. Tekan 📍 untuk cuba semula.'}
-          </span>
-          <button className="error-banner__close" onClick={() => setLocationError(null)}>✕</button>
-        </div>
-      )}
 
       {/* Error banner */}
       {error && (
