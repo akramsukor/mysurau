@@ -1,21 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase.js';
-
-/* ─── Action metadata ─── */
-// Keyed by pending_approval.action — only these three values appear in the queue.
-const ACTION_META = {
-  request_add:    { label: 'Add request',    cls: 'dash-chip--blue'  },
-  request_change: { label: 'Change request', cls: 'dash-chip--amber' },
-  request_delete: { label: 'Delete request', cls: 'dash-chip--red'   },
-};
-
-const FILTER_OPTIONS = [
-  { value: '',               label: 'All actions'    },
-  { value: 'request_add',    label: 'Add request'    },
-  { value: 'request_change', label: 'Change request' },
-  { value: 'request_delete', label: 'Delete request' },
-];
+import { actionMeta, ACTION_FILTER_OPTIONS } from './actionMeta.js';
 
 /* ─── Helpers ─── */
 
@@ -124,7 +110,7 @@ export default function Queue() {
           onChange={e => setActionFilter(e.target.value)}
           aria-label="Filter by action"
         >
-          {FILTER_OPTIONS.map(opt => (
+          {ACTION_FILTER_OPTIONS.map(opt => (
             <option key={opt.value} value={opt.value}>{opt.label}</option>
           ))}
         </select>
@@ -186,7 +172,7 @@ export default function Queue() {
             <tbody>
               {filtered.map(row => {
                 const pendingAction = row.pending_approval[0]?.action;
-                const meta  = ACTION_META[pendingAction] ?? { label: pendingAction, cls: 'dash-chip--grey' };
+                const meta = actionMeta(pendingAction);
                 const name  = getSurauName(row);
                 const email = row.user_email ?? '—';
                 return (
@@ -198,7 +184,7 @@ export default function Queue() {
                     onKeyDown={e => e.key === 'Enter' && navigate(`/dashboard/${row.id}`)}
                   >
                     <td className="dash-table__name">{name}</td>
-                    <td><span className={`dash-chip ${meta.cls}`}>{meta.label}</span></td>
+                    <td><span className={`dash-chip ${meta.chipCls}`}>{meta.label}</span></td>
                     <td className="dash-table__email" title={email}>{truncate(email, 28)}</td>
                     <td className="dash-table__time">{relativeTime(row.created_at)}</td>
                   </tr>
