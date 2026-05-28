@@ -271,10 +271,207 @@ body.dashboard-page #root {
   color: var(--text);
 }
 
+/* ─── Queue page ─── */
+.dash-queue-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 0;
+}
+
+.dash-page-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.dash-page-head__title {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.dash-page-head__sub {
+  font-size: 0.85rem;
+  color: var(--subtext);
+}
+
+/* ─── Filter bar ─── */
+.dash-filters {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.dash-select {
+  padding: 8px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.85rem;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+  flex-shrink: 0;
+}
+
+.dash-select:focus { border-color: var(--green-700); }
+
+.dash-search-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 180px;
+  max-width: 320px;
+  display: flex;
+  align-items: center;
+}
+
+.dash-search-icon {
+  position: absolute;
+  left: 10px;
+  font-size: 13px;
+  pointer-events: none;
+}
+
+.dash-search {
+  width: 100%;
+  padding: 8px 32px 8px 32px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.dash-search:focus { border-color: var(--green-700); }
+
+/* hide the browser's built-in clear button on [type=search] */
+.dash-search::-webkit-search-cancel-button { display: none; }
+
+.dash-search-clear {
+  position: absolute;
+  right: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--subtext);
+  font-size: 12px;
+  padding: 4px;
+  line-height: 1;
+}
+
+.dash-search-clear:hover { color: var(--text); }
+
+/* ─── Action chips ─── */
+.dash-chip {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+
+.dash-chip--blue  { background: #BBDEFB; color: #0D47A1; }
+.dash-chip--amber { background: #FFF3E0; color: #E65100; }
+.dash-chip--red   { background: #FFEBEE; color: #B71C1C; }
+.dash-chip--grey  { background: #F5F5F5; color: #616161; }
+
+/* ─── Table ─── */
+.dash-table-wrap {
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+}
+
+.dash-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.dash-table thead tr {
+  background: var(--bg);
+  border-bottom: 1.5px solid var(--border);
+}
+
+.dash-table th {
+  padding: 11px 16px;
+  text-align: left;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--subtext);
+  white-space: nowrap;
+}
+
+.dash-table td {
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.dash-table tbody tr:last-child td { border-bottom: none; }
+
+.dash-table__row {
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.dash-table__row:hover  { background: var(--bg); }
+.dash-table__row:focus  { outline: 2px solid var(--green-700); outline-offset: -2px; }
+
+.dash-table__name {
+  font-weight: 600;
+  color: var(--text);
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dash-table__email {
+  color: var(--subtext);
+  font-size: 0.82rem;
+}
+
+.dash-table__time {
+  color: var(--subtext);
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+/* ─── Empty state ─── */
+.dash-empty {
+  padding: 60px 40px;
+  text-align: center;
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--border);
+}
+
+.dash-empty__icon { font-size: 48px; margin-bottom: 12px; }
+.dash-empty__text { font-size: 1.05rem; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.dash-empty__sub  { font-size: 0.85rem; color: var(--subtext); }
+
 /* ─── Responsive ─── */
 @media (max-width: 600px) {
   .dash-header        { padding: 0 16px; }
   .dash-header__email { display: none; }
   .dash-main          { padding: 16px; }
   .dash-login__card   { padding: 32px 20px; }
+  .dash-filters       { gap: 8px; }
+  .dash-search-wrap   { max-width: 100%; }
+  .dash-table th,
+  .dash-table td      { padding: 10px 12px; }
 }
