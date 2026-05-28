@@ -4,20 +4,20 @@ import { supabase } from '../lib/supabase.js';
 
 /* ─── Action metadata ─── */
 const ACTION_META = {
-  request_add:    { label: 'Add',         cls: 'dash-chip--blue'  },
-  request_change: { label: 'Change',      cls: 'dash-chip--amber' },
-  request_delete: { label: 'Delete',      cls: 'dash-chip--red'   },
-  user_change:    { label: 'User change', cls: 'dash-chip--grey'  },
-  user_delete:    { label: 'User delete', cls: 'dash-chip--grey'  },
+  request_add:    { label: 'User add',              cls: 'dash-chip--blue'  },
+  request_change: { label: 'User change request',   cls: 'dash-chip--amber' },
+  request_delete: { label: 'User delete request',   cls: 'dash-chip--red'   },
+  user_change:    { label: 'User edit (unapproved)', cls: 'dash-chip--grey'  },
+  user_delete:    { label: 'User delete (unapproved)', cls: 'dash-chip--grey' },
 };
 
 const FILTER_OPTIONS = [
-  { value: '',               label: 'All actions'  },
-  { value: 'request_add',    label: 'Add'          },
-  { value: 'request_change', label: 'Change'       },
-  { value: 'request_delete', label: 'Delete'       },
-  { value: 'user_change',    label: 'User change'  },
-  { value: 'user_delete',    label: 'User delete'  },
+  { value: '',               label: 'All actions'              },
+  { value: 'request_add',    label: 'User add'                 },
+  { value: 'request_change', label: 'User change request'      },
+  { value: 'request_delete', label: 'User delete request'      },
+  { value: 'user_change',    label: 'User edit (unapproved)'   },
+  { value: 'user_delete',    label: 'User delete (unapproved)' },
 ];
 
 /* ─── Helpers ─── */
