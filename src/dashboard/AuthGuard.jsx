@@ -9,14 +9,12 @@ export default function AuthGuard() {
 
   useEffect(() => {
     let mounted = true;
+    // Guard against double-execution: INITIAL_SESSION and SIGNED_IN both fire on OAuth redirect.
+    let checked = false;
 
-    async function check() {
-      const { data: { session } } = await supabase.auth.getSession();
-
-      if (!session) {
-        navigate('/dashboard/login', { replace: true });
-        return;
-      }
+    async function checkAdmin(session) {
+      if (!mounted || checked) return;
+      checked = true;
 
       const { data: profile, error } = await supabase
         .from('profiles')
@@ -35,11 +33,21 @@ export default function AuthGuard() {
       setStatus('authorized');
     }
 
-    check();
-
-    // Handle sign-out events (e.g. token expiry, manual sign-out from another tab)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_OUT') {
+    // onAuthStateChange is the single source of truth:
+    // - INITIAL_SESSION fires after Supabase resolves the URL (including PKCE OAuth exchange),
+    //   so it always carries the correct post-redirect session state.
+    // - SIGNED_IN fires alongside INITIAL_SESSION on OAuth redirect (handled by `checked` guard).
+    // - SIGNED_OUT covers tab-level token expiry and sign-out from other tabs.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'INITIAL_SESSION') {
+        if (!session) {
+          navigate('/dashboard/login', { replace: true });
+        } else {
+          checkAdmin(session);
+        }
+      } else if (event === 'SIGNED_IN' && session) {
+        checkAdmin(session);
+      } else if (event === 'SIGNED_OUT') {
         navigate('/dashboard/login', { replace: true });
       }
     });
@@ -78,6 +86,5 @@ export default function AuthGuard() {
     );
   }
 
-  // Pass user down so Layout and pages can read it via useOutletContext()
   return <Outlet context={{ user }} />;
 }

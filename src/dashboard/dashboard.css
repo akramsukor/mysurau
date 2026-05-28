@@ -82,6 +82,24 @@ body.dashboard-page #root {
 
 .dash-login__form { display: flex; flex-direction: column; gap: 16px; }
 
+/* "or" divider between Google button and email form */
+.dash-login__divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0 4px;
+  color: var(--subtext);
+  font-size: 0.8rem;
+}
+
+.dash-login__divider::before,
+.dash-login__divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
 /* ─── Form fields ─── */
 .dash-field { display: flex; flex-direction: column; gap: 5px; }
 
@@ -150,6 +168,28 @@ body.dashboard-page #root {
 }
 
 .dash-btn--full { width: 100%; }
+
+/* Google sign-in button — follows Google branding guidelines */
+.dash-btn--google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #fff;
+  color: #3c4043;
+  border: 1.5px solid #dadce0;
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s, box-shadow 0.15s;
+}
+
+.dash-btn--google:not(:disabled):hover {
+  background: #f8f9fa;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+  opacity: 1;
+}
 
 /* ─── App shell (header + scrollable main) ─── */
 .dash-layout {
