@@ -1,0 +1,240 @@
+/* ═══════════════════════════════════════════
+   MySurau Admin Dashboard – Styles
+   Inherits CSS custom properties from App.css
+   ═══════════════════════════════════════════ */
+
+/* App.css locks overflow:hidden on html/body for the map. Override for dashboard pages. */
+body.dashboard-page,
+body.dashboard-page #root {
+  overflow: auto;
+  height: auto;
+  min-height: 100vh;
+}
+
+/* ─── Full-page loading spinner ─── */
+.dash-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+.dash-spinner {
+  width: 36px; height: 36px;
+  border: 3px solid var(--border);
+  border-top-color: var(--green-700);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* ─── Access-denied screen ─── */
+.dash-blocked {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: var(--bg);
+  padding: 24px;
+}
+
+.dash-blocked__card {
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  padding: 40px 32px;
+  text-align: center;
+  max-width: 360px;
+  width: 100%;
+  box-shadow: 0 4px 24px var(--shadow);
+}
+
+.dash-blocked__icon  { font-size: 48px; margin-bottom: 16px; }
+.dash-blocked__title { font-size: 1.4rem; font-weight: 800; margin-bottom: 8px; }
+.dash-blocked__body  { font-size: 0.9rem; color: var(--subtext); margin-bottom: 24px; }
+
+/* ─── Login page ─── */
+.dash-login {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: linear-gradient(160deg, var(--green-900) 0%, var(--green-700) 60%, var(--blue-700) 100%);
+  padding: 24px;
+}
+
+.dash-login__card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: 40px 32px;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+}
+
+.dash-login__header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.dash-login__icon     { font-size: 48px; display: block; margin-bottom: 8px; }
+.dash-login__title    { font-size: 1.8rem; font-weight: 800; color: var(--text); }
+.dash-login__subtitle { font-size: 0.85rem; color: var(--subtext); margin-top: 2px; }
+
+.dash-login__form { display: flex; flex-direction: column; gap: 16px; }
+
+/* ─── Form fields ─── */
+.dash-field { display: flex; flex-direction: column; gap: 5px; }
+
+.dash-field__label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.dash-field__input {
+  padding: 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  background: var(--bg);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.dash-field__input:focus { border-color: var(--green-700); }
+
+/* ─── Inline error ─── */
+.dash-error {
+  background: #FFEBEE;
+  color: #B71C1C;
+  border: 1px solid #FFCDD2;
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 0.85rem;
+}
+
+/* ─── Buttons ─── */
+.dash-btn {
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 10px 20px;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.dash-btn:disabled         { opacity: 0.55; cursor: not-allowed; }
+.dash-btn:not(:disabled):hover { opacity: 0.88; }
+
+.dash-btn--primary  { background: var(--green-800); color: white; }
+.dash-btn--secondary {
+  background: var(--bg);
+  color: var(--text);
+  border: 1.5px solid var(--border);
+}
+
+/* Small outlined button for the header (white text on dark bg) */
+.dash-btn--outline-sm {
+  background: transparent;
+  color: rgba(255,255,255,0.9);
+  border: 1.5px solid rgba(255,255,255,0.45);
+  font-size: 0.8rem;
+  padding: 5px 13px;
+  border-radius: var(--radius-sm);
+}
+.dash-btn--outline-sm:not(:disabled):hover {
+  background: rgba(255,255,255,0.12);
+  opacity: 1;
+}
+
+.dash-btn--full { width: 100%; }
+
+/* ─── App shell (header + scrollable main) ─── */
+.dash-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.dash-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  height: 56px;
+  background: linear-gradient(135deg, var(--green-900) 0%, var(--green-800) 70%, var(--blue-900) 100%);
+  color: white;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+  flex-shrink: 0;
+}
+
+.dash-header__brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: white;
+}
+
+.dash-header__brand:hover { opacity: 0.9; }
+
+.dash-header__icon { font-size: 22px; }
+.dash-header__name { font-size: 1rem; font-weight: 800; }
+
+.dash-header__badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  background: rgba(255,255,255,0.2);
+  padding: 2px 8px;
+  border-radius: 10px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.dash-header__right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.dash-header__email {
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.dash-main {
+  flex: 1;
+  padding: 32px 24px;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* ─── Slice placeholder cards (removed in Slice 3/4) ─── */
+.dash-placeholder {
+  padding: 48px 40px;
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  border: 2px dashed var(--border);
+  text-align: center;
+  color: var(--subtext);
+}
+
+.dash-placeholder h2 {
+  font-size: 1.2rem;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 600px) {
+  .dash-header        { padding: 0 16px; }
+  .dash-header__email { display: none; }
+  .dash-main          { padding: 16px; }
+  .dash-login__card   { padding: 32px 20px; }
+}
