@@ -711,6 +711,13 @@ body.dashboard-page #root {
   display: block;
 }
 
+/* Amber outline on proposed images that differ from current */
+.dash-image-cell--changed .dash-image-thumb,
+.dash-image-cell--changed .dash-image-empty {
+  outline: 2px solid #FFB300;
+  outline-offset: 1px;
+}
+
 .dash-image-empty {
   flex: 1;
   min-width: 0;

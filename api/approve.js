@@ -91,11 +91,11 @@ async function handleRequestChange(pending, adminUserId, adminEmail) {
 
   const curImages = cur?.surau_images ?? [];
 
-  // Promote suggestion images; track new live URLs for the diff
+  // Promote suggestion images only for non-null pending slots
   const promotedUrls = {};
   for (const pos of [1, 2, 3, 4]) {
     const proposedUrl = pending[`image_${pos}`];
-    if (proposedUrl?.includes('suggestion_')) {
+    if (proposedUrl !== null && proposedUrl?.includes('suggestion_')) {
       try {
         promotedUrls[pos] = await promoteSuggestionImage(proposedUrl, pending.surau_id, pos);
       } catch (err) {
@@ -105,20 +105,23 @@ async function handleRequestChange(pending, adminUserId, adminEmail) {
     }
   }
 
-  // Apply surau row update (all fields from the pending snapshot)
-  await supabaseAdmin.from('surau').update({
-    name:          pending.name,
-    category:      pending.category,
-    address:       pending.address,
-    friday_prayer: pending.friday_prayer,
-    public_access: pending.public_access,
-    status:        pending.status,
-    location:      pending.location, // raw geography WKB — copy directly
-  }).eq('id', pending.surau_id);
+  // Sparse update: only include fields the user actually changed (non-null in pending)
+  const updates = {};
+  if (pending.name          !== null) updates.name          = pending.name;
+  if (pending.category      !== null) updates.category      = pending.category;
+  if (pending.address       !== null) updates.address       = pending.address;
+  if (pending.friday_prayer !== null) updates.friday_prayer = pending.friday_prayer;
+  if (pending.public_access !== null) updates.public_access = pending.public_access;
+  if (pending.status        !== null) updates.status        = pending.status;
+  if (pending.location      !== null) updates.location      = pending.location; // raw WKB
+
+  if (Object.keys(updates).length > 0) {
+    await supabaseAdmin.from('surau').update(updates).eq('id', pending.surau_id);
+  }
 
   await supabaseAdmin.from('pending_approval').delete().eq('id', pending.id);
 
-  // Build diff strings for the audit row
+  // Build diff strings — guard each field so null pending → null diff (not "value -> deleted")
   const curLoc = pointToLatLon(cur?.location_text);
   const newLoc = pointToLatLon(pending.location_text);
 
@@ -130,17 +133,17 @@ async function handleRequestChange(pending, adminUserId, adminEmail) {
     user_id:       adminUserId,
     user_email:    adminEmail,
     action:        'change',
-    surau_name:    diff(cur?.name,             pending.name),
-    category:      diff(cur?.category,         pending.category),
-    friday_prayer: diff(cur?.friday_prayer,    pending.friday_prayer),
-    public_access: diff(cur?.public_access,    pending.public_access),
-    location:      diff(curLoc,                newLoc),
-    status:        diff(cur?.status,           pending.status),
-    address:       diff(cur?.address,          pending.address),
-    image_1:       diff(curImageUrl(1),        newImageUrl(1)),
-    image_2:       diff(curImageUrl(2),        newImageUrl(2)),
-    image_3:       diff(curImageUrl(3),        newImageUrl(3)),
-    image_4:       diff(curImageUrl(4),        newImageUrl(4)),
+    surau_name:    pending.name          !== null ? diff(cur?.name,          pending.name)          : null,
+    category:      pending.category      !== null ? diff(cur?.category,      pending.category)      : null,
+    friday_prayer: pending.friday_prayer !== null ? diff(cur?.friday_prayer, pending.friday_prayer) : null,
+    public_access: pending.public_access !== null ? diff(cur?.public_access, pending.public_access) : null,
+    location:      pending.location_text !== null ? diff(curLoc,             newLoc)                : null,
+    status:        pending.status        !== null ? diff(cur?.status,        pending.status)        : null,
+    address:       pending.address       !== null ? diff(cur?.address,       pending.address)       : null,
+    image_1:       pending.image_1       !== null ? diff(curImageUrl(1),     newImageUrl(1))        : null,
+    image_2:       pending.image_2       !== null ? diff(curImageUrl(2),     newImageUrl(2))        : null,
+    image_3:       pending.image_3       !== null ? diff(curImageUrl(3),     newImageUrl(3))        : null,
+    image_4:       pending.image_4       !== null ? diff(curImageUrl(4),     newImageUrl(4))        : null,
   });
 }
 

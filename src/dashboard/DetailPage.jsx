@@ -61,13 +61,19 @@ const DIFF_FIELDS = [
 
 /* ─── Sub-components ─── */
 
-function CompareRow({ label, current, proposed }) {
-  const changed = current !== proposed;
+// surauVal  — raw value from the surau row (always shown as Current)
+// pendingVal — raw value from pending_approval; null means "field not touched"
+function CompareRow({ label, surauVal, pendingVal }) {
+  // Proposed = pending value when set, otherwise fall back to current surau value
+  const proposed = (pendingVal !== null && pendingVal !== undefined) ? pendingVal : surauVal;
+  // Only highlight when pending explicitly carries a value that differs from current
+  const highlight = pendingVal !== null && pendingVal !== undefined
+    && dv(pendingVal) !== dv(surauVal);
   return (
-    <tr className={changed ? 'dash-compare__row--diff' : ''}>
+    <tr className={highlight ? 'dash-compare__row--diff' : ''}>
       <td className="dash-compare__field">{label}</td>
-      <td className="dash-compare__val">{current}</td>
-      <td className="dash-compare__val">{proposed}</td>
+      <td className="dash-compare__val">{dv(surauVal)}</td>
+      <td className="dash-compare__val">{dv(proposed)}</td>
     </tr>
   );
 }
@@ -127,9 +133,6 @@ function Thumb({ url, label }) {
 }
 
 function ImageStrip({ images, pending }) {
-  const curUrls = [1, 2, 3, 4].map(n => images.find(i => i.position === n)?.url ?? null);
-  const proUrls = [1, 2, 3, 4].map(n => pending[`image_${n}`] ?? null);
-
   return (
     <section className="dash-section">
       <h3 className="dash-section__title">Images</h3>
@@ -137,13 +140,27 @@ function ImageStrip({ images, pending }) {
         <div className="dash-images-group">
           <p className="dash-images-group__label">Current</p>
           <div className="dash-images-group__thumbs">
-            {curUrls.map((url, i) => <Thumb key={i} url={url} label={`Current ${i + 1}`} />)}
+            {[1, 2, 3, 4].map(n => {
+              const url = images.find(i => i.position === n)?.url ?? null;
+              return <Thumb key={n} url={url} label={`Current ${n}`} />;
+            })}
           </div>
         </div>
         <div className="dash-images-group">
           <p className="dash-images-group__label">Proposed</p>
           <div className="dash-images-group__thumbs">
-            {proUrls.map((url, i) => <Thumb key={i} url={url} label={`Proposed ${i + 1}`} />)}
+            {[1, 2, 3, 4].map(n => {
+              const curUrl = images.find(i => i.position === n)?.url ?? null;
+              const pendingUrl = pending[`image_${n}`] ?? null;
+              // null pending = no change; fall back to current
+              const displayUrl = pendingUrl ?? curUrl;
+              const changed = pendingUrl !== null && pendingUrl !== curUrl;
+              return (
+                <div key={n} className={changed ? 'dash-image-cell--changed' : undefined}>
+                  <Thumb url={displayUrl} label={`Proposed ${n}`} />
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -330,14 +347,20 @@ export default function DetailPage() {
               </tr>
             </thead>
             <tbody>
-              <CompareRow label="Name"          current={dv(surau?.name)}          proposed={dv(pending.name)} />
-              <CompareRow label="Category"      current={dv(surau?.category)}       proposed={dv(pending.category)} />
-              <CompareRow label="Address"       current={dv(surau?.address)}        proposed={dv(pending.address)} />
-              <CompareRow label="Friday prayer" current={dv(surau?.friday_prayer)}  proposed={dv(pending.friday_prayer)} />
-              <CompareRow label="Public access" current={dv(surau?.public_access)}  proposed={dv(pending.public_access)} />
-              <CompareRow label="Status"        current={dv(surau?.status)}         proposed={dv(pending.status)} />
-              <CompareRow label="Latitude"      current={dv(currentPt?.lat)}        proposed={dv(proposedPt?.lat)} />
-              <CompareRow label="Longitude"     current={dv(currentPt?.lng)}        proposed={dv(proposedPt?.lng)} />
+              <CompareRow label="Name"          surauVal={surau?.name}          pendingVal={pending.name} />
+              <CompareRow label="Category"      surauVal={surau?.category}       pendingVal={pending.category} />
+              <CompareRow label="Address"       surauVal={surau?.address}        pendingVal={pending.address} />
+              <CompareRow label="Friday prayer" surauVal={surau?.friday_prayer}  pendingVal={pending.friday_prayer} />
+              <CompareRow label="Public access" surauVal={surau?.public_access}  pendingVal={pending.public_access} />
+              <CompareRow label="Status"        surauVal={surau?.status}         pendingVal={pending.status} />
+              <CompareRow label="Latitude"
+                surauVal={currentPt?.lat}
+                pendingVal={pending.location_text != null ? proposedPt?.lat : null}
+              />
+              <CompareRow label="Longitude"
+                surauVal={currentPt?.lng}
+                pendingVal={pending.location_text != null ? proposedPt?.lng : null}
+              />
             </tbody>
           </table>
         </div>
