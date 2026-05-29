@@ -673,49 +673,37 @@ body.dashboard-page #root {
 }
 .dash-map-attr a { color: inherit; text-decoration: underline; }
 
-/* Image strip — 2 columns (Current | Proposed) × 4 rows (positions 1–4) */
-.dash-images-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+/* Image strip — single row: [Current ×4] | [Proposed ×4] */
+.dash-images-row {
+  display: flex;
+  gap: 20px;
 }
 
-.dash-images-col-head {
+.dash-images-group {
+  flex: 1;
+  min-width: 0;
+}
+
+.dash-images-group__label {
   font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--subtext);
-  padding-bottom: 4px;
+  padding-bottom: 6px;
+  margin-bottom: 8px;
   border-bottom: 1.5px solid var(--border);
-  margin-bottom: 4px;
 }
 
-/* Each image cell — position badge overlays the thumbnail */
-.dash-image-cell {
-  position: relative;
-}
-
-.dash-image-cell__pos {
-  position: absolute;
-  top: 6px;
-  left: 6px;
-  z-index: 1;
-  background: rgba(0, 0, 0, 0.55);
-  color: white;
-  font-size: 0.65rem;
-  font-weight: 700;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
+.dash-images-group__thumbs {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
+  gap: 8px;
 }
 
+/* Each thumbnail or placeholder fills its equal share of the 4-up row */
 .dash-image-thumb {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   aspect-ratio: 1;
   object-fit: cover;
   border-radius: var(--radius-sm);
@@ -724,7 +712,8 @@ body.dashboard-page #root {
 }
 
 .dash-image-empty {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   aspect-ratio: 1;
   background: var(--bg);
   border: 1.5px dashed var(--border);
@@ -733,7 +722,7 @@ body.dashboard-page #root {
   align-items: center;
   justify-content: center;
   color: var(--subtext);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 /* Raw diff (collapsible) */
@@ -816,7 +805,7 @@ details[open] .dash-diff-summary::before { content: '▼ '; }
   .dash-search-wrap   { max-width: 100%; }
   .dash-table th,
   .dash-table td      { padding: 10px 12px; }
-  .dash-dual-maps       { grid-template-columns: 1fr; }
-  .dash-images-grid     { grid-template-columns: 1fr; }
-  .dash-footer          { padding: 10px 16px; }
+  .dash-dual-maps         { grid-template-columns: 1fr; }
+  .dash-images-row        { flex-direction: column; }
+  .dash-footer            { padding: 10px 16px; }
 }

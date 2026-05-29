@@ -1,4 +1,4 @@
-import { useEffect, useState, Fragment } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
 import { supabase } from '../lib/supabase.js';
@@ -120,35 +120,32 @@ function DualMaps({ currentPt, proposedPt }) {
   );
 }
 
+function Thumb({ url, label }) {
+  return url
+    ? <img src={url} className="dash-image-thumb" alt={label} />
+    : <div className="dash-image-empty">—</div>;
+}
+
 function ImageStrip({ images, pending }) {
+  const curUrls = [1, 2, 3, 4].map(n => images.find(i => i.position === n)?.url ?? null);
+  const proUrls = [1, 2, 3, 4].map(n => pending[`image_${n}`] ?? null);
+
   return (
     <section className="dash-section">
       <h3 className="dash-section__title">Images</h3>
-      <div className="dash-images-grid">
-        {/* Column headers */}
-        <div className="dash-images-col-head">Current</div>
-        <div className="dash-images-col-head">Proposed</div>
-
-        {/* 4 rows — position badge on the left (current) cell only */}
-        {[1, 2, 3, 4].map(n => {
-          const curUrl = images.find(i => i.position === n)?.url ?? null;
-          const proUrl = pending[`image_${n}`] ?? null;
-          return (
-            <Fragment key={n}>
-              <div className="dash-image-cell">
-                <span className="dash-image-cell__pos">{n}</span>
-                {curUrl
-                  ? <img src={curUrl} className="dash-image-thumb" alt={`Current ${n}`} />
-                  : <div className="dash-image-empty">—</div>}
-              </div>
-              <div className="dash-image-cell">
-                {proUrl
-                  ? <img src={proUrl} className="dash-image-thumb" alt={`Proposed ${n}`} />
-                  : <div className="dash-image-empty">—</div>}
-              </div>
-            </Fragment>
-          );
-        })}
+      <div className="dash-images-row">
+        <div className="dash-images-group">
+          <p className="dash-images-group__label">Current</p>
+          <div className="dash-images-group__thumbs">
+            {curUrls.map((url, i) => <Thumb key={i} url={url} label={`Current ${i + 1}`} />)}
+          </div>
+        </div>
+        <div className="dash-images-group">
+          <p className="dash-images-group__label">Proposed</p>
+          <div className="dash-images-group__thumbs">
+            {proUrls.map((url, i) => <Thumb key={i} url={url} label={`Proposed ${i + 1}`} />)}
+          </div>
+        </div>
       </div>
     </section>
   );
