@@ -6,11 +6,12 @@ import { actionMeta } from './actionMeta.js';
 
 /* ─── Pure helpers ─── */
 
-// ST_AsText returns "POINT(lon lat)"
-function parsePoint(wkt) {
+// "POINT(101.679 3.022)" → { lng: 101.679, lat: 3.022 }
+function parsePointText(wkt) {
   if (!wkt) return null;
-  const m = wkt.match(/POINT\(([^\s]+)\s+([^)]+)\)/);
-  return m ? { lon: parseFloat(m[1]), lat: parseFloat(m[2]) } : null;
+  const m = wkt.match(/^POINT\(([-\d.]+)\s+([-\d.]+)\)$/);
+  if (!m) return null;
+  return { lng: Number(m[1]), lat: Number(m[2]) };
 }
 
 function relativeTime(iso) {
@@ -79,12 +80,12 @@ function DetailMap({ currentPt, proposedPt }) {
   if (!hasCur && !hasPro) return null;
 
   const same = hasCur && hasPro &&
-    currentPt.lat === proposedPt.lat && currentPt.lon === proposedPt.lon;
+    currentPt.lat === proposedPt.lat && currentPt.lng === proposedPt.lng;
 
   const mapProps = (hasCur && hasPro && !same)
-    ? { bounds: [[currentPt.lat, currentPt.lon], [proposedPt.lat, proposedPt.lon]],
+    ? { bounds: [[currentPt.lat, currentPt.lng], [proposedPt.lat, proposedPt.lng]],
         boundsOptions: { padding: [48, 48] } }
-    : { center: [(hasCur ? currentPt : proposedPt).lat, (hasCur ? currentPt : proposedPt).lon],
+    : { center: [(hasCur ? currentPt : proposedPt).lat, (hasCur ? currentPt : proposedPt).lng],
         zoom: 15 };
 
   return (
@@ -100,7 +101,7 @@ function DetailMap({ currentPt, proposedPt }) {
           <TileLayer url={TILE_URL} />
           {hasCur && (
             <CircleMarker
-              center={[currentPt.lat, currentPt.lon]}
+              center={[currentPt.lat, currentPt.lng]}
               radius={9}
               pathOptions={{ color: '#B71C1C', fillColor: '#EF5350', fillOpacity: 0.9, weight: 2 }}
             >
@@ -109,7 +110,7 @@ function DetailMap({ currentPt, proposedPt }) {
           )}
           {hasPro && !same && (
             <CircleMarker
-              center={[proposedPt.lat, proposedPt.lon]}
+              center={[proposedPt.lat, proposedPt.lng]}
               radius={9}
               pathOptions={{ color: '#0D47A1', fillColor: '#42A5F5', fillOpacity: 0.9, weight: 2 }}
             >
@@ -169,12 +170,13 @@ function ImageStrip({ images, pending }) {
 /* ─── Main page ─── */
 export default function DetailPage() {
   const { auditId } = useParams();
-  const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState(null);
-  const [audit,   setAudit]   = useState(null);
-  const [pending, setPending] = useState(null);
-  const [surau,   setSurau]   = useState(null);
-  const [images,  setImages]  = useState([]);
+  const [loading,    setLoading]    = useState(true);
+  const [error,      setError]      = useState(null);   // audit/pending fetch failure
+  const [surauError, setSurauError] = useState(null);   // surau fetch failure (separate diagnosis)
+  const [audit,      setAudit]      = useState(null);
+  const [pending,    setPending]    = useState(null);
+  const [surau,      setSurau]      = useState(null);
+  const [images,     setImages]     = useState([]);
 
   useEffect(() => {
     let mounted = true;
@@ -186,7 +188,7 @@ export default function DetailPage() {
           supabase.from('audit_history').select('*').eq('id', auditId).single(),
           supabase
             .from('pending_approval')
-            .select('*, location_text:ST_AsText(location::geometry)')
+            .select('*, location_text')
             .eq('audit_history_id', auditId)
             .maybeSingle(),
         ]);
@@ -203,11 +205,13 @@ export default function DetailPage() {
         if (auditData.surau_id) {
           const surauRes = await supabase
             .from('surau')
-            .select('*, location_text:ST_AsText(location::geometry), surau_images(*)')
+            .select('*, location_text, surau_images(*)')
             .eq('id', auditData.surau_id)
             .single();
           if (!mounted) return;
-          if (!surauRes.error) {
+          if (surauRes.error) {
+            setSurauError(surauRes.error.message);
+          } else {
             surauData  = surauRes.data;
             imagesData = surauRes.data.surau_images ?? [];
           }
@@ -245,6 +249,17 @@ export default function DetailPage() {
     );
   }
 
+  /* ── Surau fetch error (separate from 404 — easier to diagnose) ── */
+  if (surauError) {
+    return (
+      <div className="dash-detail-state">
+        <div className="dash-detail-state__icon">⚠️</div>
+        <p className="dash-detail-state__text">Failed to load surau details — {surauError}</p>
+        <Link to="/dashboard" className="dash-btn dash-btn--secondary">← Back to queue</Link>
+      </div>
+    );
+  }
+
   /* ── 404 / already resolved ── */
   if (!audit || !pending) {
     return (
@@ -258,8 +273,8 @@ export default function DetailPage() {
 
   /* ── Derived data ── */
   const meta       = actionMeta(pending.action);
-  const currentPt  = parsePoint(surau?.location_text);
-  const proposedPt = parsePoint(pending.location_text);
+  const currentPt  = parsePointText(surau?.location_text);
+  const proposedPt = parsePointText(pending.location_text);
   const activeDiffs = DIFF_FIELDS.filter(({ key }) => {
     const v = audit[key];
     return v !== null && v !== undefined && String(v).includes(' -> ');
@@ -309,7 +324,7 @@ export default function DetailPage() {
               <CompareRow label="Public access" current={dv(surau?.public_access)}  proposed={dv(pending.public_access)} />
               <CompareRow label="Status"        current={dv(surau?.status)}         proposed={dv(pending.status)} />
               <CompareRow label="Latitude"      current={dv(currentPt?.lat)}        proposed={dv(proposedPt?.lat)} />
-              <CompareRow label="Longitude"     current={dv(currentPt?.lon)}        proposed={dv(proposedPt?.lon)} />
+              <CompareRow label="Longitude"     current={dv(currentPt?.lng)}        proposed={dv(proposedPt?.lng)} />
             </tbody>
           </table>
         </div>
