@@ -468,16 +468,18 @@ body.dashboard-page #root {
 
 /* ─── Detail page ─── */
 .dash-detail {
-  max-width: 900px;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
 }
 
-/* Scrollable content area — flex: 1 fills space above the sticky footer */
+/* Centered scrollable content — max-width keeps the layout balanced on wide screens */
 .dash-detail-content {
   flex: 1;
-  padding-bottom: 96px; /* prevents last section from hiding under the footer */
+  max-width: 1100px;
+  width: 100%;
+  margin: 0 auto;
+  padding-bottom: 80px; /* clears the fixed footer */
 }
 
 /* Top bar */
@@ -509,6 +511,19 @@ body.dashboard-page #root {
   flex: 1;
 }
 
+/* Surau ID (e.g. "Surau #1") — slightly more prominent than the audit ID */
+.dash-detail-bar__surau-id {
+  font-size: 0.8rem;
+  font-family: monospace;
+  font-weight: 700;
+  color: var(--text);
+  background: var(--bg);
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+
+/* Audit row ID (e.g. "#41") — dimmer, secondary */
 .dash-detail-bar__id {
   font-size: 0.78rem;
   font-family: monospace;
@@ -658,34 +673,45 @@ body.dashboard-page #root {
 }
 .dash-map-attr a { color: inherit; text-decoration: underline; }
 
-/* Image strip */
-.dash-images {
+/* Image strip — 2 columns (Current | Proposed) × 4 rows (positions 1–4) */
+.dash-images-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
 
-.dash-image-col__label {
+.dash-images-col-head {
   font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--subtext);
-  margin-bottom: 8px;
-  text-align: center;
+  padding-bottom: 4px;
+  border-bottom: 1.5px solid var(--border);
+  margin-bottom: 4px;
 }
 
-.dash-image-slot { margin-bottom: 8px; }
+/* Each image cell — position badge overlays the thumbnail */
+.dash-image-cell {
+  position: relative;
+}
 
-.dash-image-slot__sub {
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: var(--subtext);
-  margin-bottom: 4px;
-  padding: 2px 6px;
-  background: var(--bg);
-  border-radius: 4px;
-  display: inline-block;
+.dash-image-cell__pos {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 1;
+  background: rgba(0, 0, 0, 0.55);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
 }
 
 .dash-image-thumb {
@@ -748,10 +774,14 @@ details[open] .dash-diff-summary::before { content: '▼ '; }
 .dash-diff-key { color: var(--subtext); font-weight: 700; min-width: 120px; flex-shrink: 0; }
 .dash-diff-val { color: var(--text);    word-break: break-all; }
 
-/* Sticky approve/reject footer — sticky (not fixed) so it stays in flow */
+/* Fixed full-width footer — position:fixed + left:0/right:0 spans the whole
+   viewport regardless of the centered content container's max-width.
+   html.dashboard-page has overflow:auto so scrolling still works. */
 .dash-footer {
-  position: sticky;
+  position: fixed;
   bottom: 0;
+  left: 0;
+  right: 0;
   z-index: 90;
   display: flex;
   justify-content: flex-end;
@@ -786,7 +816,7 @@ details[open] .dash-diff-summary::before { content: '▼ '; }
   .dash-search-wrap   { max-width: 100%; }
   .dash-table th,
   .dash-table td      { padding: 10px 12px; }
-  .dash-dual-maps     { grid-template-columns: 1fr; }
-  .dash-images        { grid-template-columns: repeat(2, 1fr); }
-  .dash-footer        { padding: 10px 16px; }
+  .dash-dual-maps       { grid-template-columns: 1fr; }
+  .dash-images-grid     { grid-template-columns: 1fr; }
+  .dash-footer          { padding: 10px 16px; }
 }

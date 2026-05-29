@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Fragment } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
 import { supabase } from '../lib/supabase.js';
@@ -124,26 +124,29 @@ function ImageStrip({ images, pending }) {
   return (
     <section className="dash-section">
       <h3 className="dash-section__title">Images</h3>
-      <div className="dash-images">
+      <div className="dash-images-grid">
+        {/* Column headers */}
+        <div className="dash-images-col-head">Current</div>
+        <div className="dash-images-col-head">Proposed</div>
+
+        {/* 4 rows — position badge on the left (current) cell only */}
         {[1, 2, 3, 4].map(n => {
           const curUrl = images.find(i => i.position === n)?.url ?? null;
           const proUrl = pending[`image_${n}`] ?? null;
           return (
-            <div key={n} className="dash-image-col">
-              <p className="dash-image-col__label">Image {n}</p>
-              <div className="dash-image-slot">
-                <p className="dash-image-slot__sub">Current</p>
+            <Fragment key={n}>
+              <div className="dash-image-cell">
+                <span className="dash-image-cell__pos">{n}</span>
                 {curUrl
-                  ? <img src={curUrl} className="dash-image-thumb" alt={`Current image ${n}`} />
+                  ? <img src={curUrl} className="dash-image-thumb" alt={`Current ${n}`} />
                   : <div className="dash-image-empty">—</div>}
               </div>
-              <div className="dash-image-slot">
-                <p className="dash-image-slot__sub">Proposed</p>
+              <div className="dash-image-cell">
                 {proUrl
-                  ? <img src={proUrl} className="dash-image-thumb" alt={`Proposed image ${n}`} />
+                  ? <img src={proUrl} className="dash-image-thumb" alt={`Proposed ${n}`} />
                   : <div className="dash-image-empty">—</div>}
               </div>
-            </div>
+            </Fragment>
           );
         })}
       </div>
@@ -273,6 +276,7 @@ export default function DetailPage() {
         <Link to="/dashboard" className="dash-detail-bar__back">← Queue</Link>
         <div className="dash-detail-bar__info">
           <span className={`dash-chip ${meta.chipCls}`}>{meta.label}</span>
+          <code className="dash-detail-bar__surau-id">Surau #{audit.surau_id}</code>
           <code className="dash-detail-bar__id">#{auditId}</code>
           <span className="dash-detail-bar__email">{audit.user_email ?? '—'}</span>
           <span className="dash-detail-bar__time">
