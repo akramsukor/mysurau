@@ -73,65 +73,49 @@ function CompareRow({ label, current, proposed }) {
 }
 
 const TILE_URL = 'https://cartodb-basemaps-a.global.ssl.fastly.net/light_all/{z}/{x}/{y}@2x.png';
+const RED_MARKER  = { color: '#B71C1C', fillColor: '#EF5350', fillOpacity: 0.9, weight: 2 };
+const BLUE_MARKER = { color: '#0D47A1', fillColor: '#42A5F5', fillOpacity: 0.9, weight: 2 };
 
-function DetailMap({ currentPt, proposedPt }) {
-  const hasCur = currentPt != null;
-  const hasPro = proposedPt != null;
-  if (!hasCur && !hasPro) return null;
+function SingleMap({ pt, label, markerOpts }) {
+  return (
+    <div>
+      <p className="dash-section__subtitle">{label}</p>
+      {pt ? (
+        <>
+          <div className="dash-map">
+            <MapContainer
+              center={[pt.lat, pt.lng]}
+              zoom={16}
+              style={{ height: 200, width: '100%' }}
+              scrollWheelZoom={false}
+              attributionControl={false}
+            >
+              <TileLayer url={TILE_URL} />
+              <CircleMarker center={[pt.lat, pt.lng]} radius={9} pathOptions={markerOpts} />
+            </MapContainer>
+          </div>
+          <p className="dash-map-coords">{pt.lat.toFixed(6)}, {pt.lng.toFixed(6)}</p>
+        </>
+      ) : (
+        <div className="dash-map dash-map--empty">No location data</div>
+      )}
+    </div>
+  );
+}
 
-  const same = hasCur && hasPro &&
-    currentPt.lat === proposedPt.lat && currentPt.lng === proposedPt.lng;
-
-  const mapProps = (hasCur && hasPro && !same)
-    ? { bounds: [[currentPt.lat, currentPt.lng], [proposedPt.lat, proposedPt.lng]],
-        boundsOptions: { padding: [48, 48] } }
-    : { center: [(hasCur ? currentPt : proposedPt).lat, (hasCur ? currentPt : proposedPt).lng],
-        zoom: 15 };
-
+function DualMaps({ currentPt, proposedPt }) {
   return (
     <section className="dash-section">
       <h3 className="dash-section__title">Location</h3>
-      <div className="dash-map">
-        <MapContainer
-          {...mapProps}
-          style={{ height: 280, width: '100%' }}
-          scrollWheelZoom={false}
-          attributionControl={false}
-        >
-          <TileLayer url={TILE_URL} />
-          {hasCur && (
-            <CircleMarker
-              center={[currentPt.lat, currentPt.lng]}
-              radius={9}
-              pathOptions={{ color: '#B71C1C', fillColor: '#EF5350', fillOpacity: 0.9, weight: 2 }}
-            >
-              <Popup>Current location</Popup>
-            </CircleMarker>
-          )}
-          {hasPro && !same && (
-            <CircleMarker
-              center={[proposedPt.lat, proposedPt.lng]}
-              radius={9}
-              pathOptions={{ color: '#0D47A1', fillColor: '#42A5F5', fillOpacity: 0.9, weight: 2 }}
-            >
-              <Popup>Proposed location</Popup>
-            </CircleMarker>
-          )}
-        </MapContainer>
+      <div className="dash-dual-maps">
+        <SingleMap pt={currentPt}  label="Current location"  markerOpts={RED_MARKER}  />
+        <SingleMap pt={proposedPt} label="Proposed location" markerOpts={BLUE_MARKER} />
       </div>
-      <div className="dash-map-footer">
-        <span className="dash-map-legend">
-          <span className="dash-map-legend__dot dash-map-legend__dot--red" /> Current
-          {hasPro && !same && (
-            <>&nbsp;&nbsp;<span className="dash-map-legend__dot dash-map-legend__dot--blue" /> Proposed</>
-          )}
-        </span>
-        {/* App.css hides Leaflet's attribution control globally, so render it manually */}
-        <span className="dash-map-attr">
-          © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors
-          {' '}© <a href="https://carto.com/" target="_blank" rel="noreferrer">CARTO</a>
-        </span>
-      </div>
+      {/* App.css hides Leaflet's built-in attribution globally */}
+      <span className="dash-map-attr">
+        © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors
+        {' '}© <a href="https://carto.com/" target="_blank" rel="noreferrer">CARTO</a>
+      </span>
     </section>
   );
 }
@@ -282,6 +266,7 @@ export default function DetailPage() {
 
   return (
     <div className="dash-detail">
+    <div className="dash-detail-content">
 
       {/* ── Top bar ── */}
       <div className="dash-detail-bar">
@@ -331,7 +316,7 @@ export default function DetailPage() {
       </section>
 
       {/* ── Map ── */}
-      <DetailMap currentPt={currentPt} proposedPt={proposedPt} />
+      <DualMaps currentPt={currentPt} proposedPt={proposedPt} />
 
       {/* ── Image strip ── */}
       <ImageStrip images={images} pending={pending} />
@@ -353,31 +338,29 @@ export default function DetailPage() {
         </section>
       )}
 
-      {/* Spacer so footer doesn't overlap last section */}
-      <div style={{ height: 76 }} />
-
-      {/* ── Sticky footer ── */}
-      <div className="dash-footer">
-        <button
-          className="dash-btn dash-btn--secondary"
-          onClick={() => {
-            console.log('reject', auditId);
-            alert('Reject handler coming in Slice 6');
-          }}
-        >
-          Reject
-        </button>
-        <button
-          className="dash-btn dash-btn--approve"
-          onClick={() => {
-            console.log('approve', auditId);
-            alert('Approve handler coming in Slice 5');
-          }}
-        >
-          Approve ✓
-        </button>
-      </div>
-
     </div>
+
+    <div className="dash-footer">
+      <button
+        className="dash-btn dash-btn--secondary"
+        onClick={() => {
+          console.log('reject', auditId);
+          alert('Reject handler coming in Slice 6');
+        }}
+      >
+        Reject
+      </button>
+      <button
+        className="dash-btn dash-btn--approve"
+        onClick={() => {
+          console.log('approve', auditId);
+          alert('Approve handler coming in Slice 5');
+        }}
+      >
+        Approve ✓
+      </button>
+    </div>
+
+  </div>
   );
 }

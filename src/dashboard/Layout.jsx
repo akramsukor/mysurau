@@ -6,10 +6,15 @@ export default function Layout() {
   const { user } = useOutletContext();
   const navigate = useNavigate();
 
-  // Override App.css's overflow:hidden on html/body (set for the map page)
+  // App.css sets overflow:hidden on BOTH html and body for the map page.
+  // Both elements need the override class or html clips the body scroll.
   useEffect(() => {
+    document.documentElement.classList.add('dashboard-page');
     document.body.classList.add('dashboard-page');
-    return () => document.body.classList.remove('dashboard-page');
+    return () => {
+      document.documentElement.classList.remove('dashboard-page');
+      document.body.classList.remove('dashboard-page');
+    };
   }, []);
 
   async function handleSignOut() {

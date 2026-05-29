@@ -23,6 +23,7 @@ export default function Login() {
 
   // Override body overflow + redirect if already signed in as admin
   useEffect(() => {
+    document.documentElement.classList.add('dashboard-page');
     document.body.classList.add('dashboard-page');
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -35,7 +36,10 @@ export default function Login() {
       if (profile?.admin) navigate('/dashboard', { replace: true });
     });
 
-    return () => document.body.classList.remove('dashboard-page');
+    return () => {
+      document.documentElement.classList.remove('dashboard-page');
+      document.body.classList.remove('dashboard-page');
+    };
   }, [navigate]);
 
   async function handleGoogleSignIn() {

@@ -3,7 +3,9 @@
    Inherits CSS custom properties from App.css
    ═══════════════════════════════════════════ */
 
-/* App.css locks overflow:hidden on html/body for the map. Override for dashboard pages. */
+/* App.css sets overflow:hidden on BOTH html AND body/root for the map page.
+   html must be overridden too or it clips body's scroll entirely. */
+html.dashboard-page,
 body.dashboard-page,
 body.dashboard-page #root {
   overflow: auto;
@@ -465,7 +467,18 @@ body.dashboard-page #root {
 .dash-empty__sub  { font-size: 0.85rem; color: var(--subtext); }
 
 /* ─── Detail page ─── */
-.dash-detail { max-width: 900px; }
+.dash-detail {
+  max-width: 900px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Scrollable content area — flex: 1 fills space above the sticky footer */
+.dash-detail-content {
+  flex: 1;
+  padding-bottom: 96px; /* prevents last section from hiding under the footer */
+}
 
 /* Top bar */
 .dash-detail-bar {
@@ -601,38 +614,43 @@ body.dashboard-page #root {
 }
 .dash-compare__row--diff .dash-compare__val { background: #FFF8E1; }
 
-/* Map */
+/* Dual map grid */
+.dash-dual-maps {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+
+.dash-section__subtitle {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
 .dash-map {
   border-radius: var(--radius-sm);
   overflow: hidden;
   border: 1px solid var(--border);
 }
 
-.dash-map-footer {
+.dash-map--empty {
+  height: 180px;
+  background: var(--bg);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-top: 10px;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.dash-map-legend {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  justify-content: center;
   font-size: 0.82rem;
   color: var(--subtext);
 }
 
-.dash-map-legend__dot {
-  display: inline-block;
-  width: 10px; height: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
+.dash-map-coords {
+  margin-top: 6px;
+  font-size: 0.72rem;
+  color: var(--subtext);
+  font-family: monospace;
 }
-.dash-map-legend__dot--red  { background: #EF5350; }
-.dash-map-legend__dot--blue { background: #42A5F5; }
 
 .dash-map-attr {
   font-size: 0.7rem;
@@ -661,8 +679,13 @@ body.dashboard-page #root {
 
 .dash-image-slot__sub {
   font-size: 0.7rem;
+  font-weight: 600;
   color: var(--subtext);
   margin-bottom: 4px;
+  padding: 2px 6px;
+  background: var(--bg);
+  border-radius: 4px;
+  display: inline-block;
 }
 
 .dash-image-thumb {
@@ -725,10 +748,10 @@ details[open] .dash-diff-summary::before { content: '▼ '; }
 .dash-diff-key { color: var(--subtext); font-weight: 700; min-width: 120px; flex-shrink: 0; }
 .dash-diff-val { color: var(--text);    word-break: break-all; }
 
-/* Sticky approve/reject footer */
+/* Sticky approve/reject footer — sticky (not fixed) so it stays in flow */
 .dash-footer {
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
+  position: sticky;
+  bottom: 0;
   z-index: 90;
   display: flex;
   justify-content: flex-end;
@@ -763,4 +786,7 @@ details[open] .dash-diff-summary::before { content: '▼ '; }
   .dash-search-wrap   { max-width: 100%; }
   .dash-table th,
   .dash-table td      { padding: 10px 12px; }
+  .dash-dual-maps     { grid-template-columns: 1fr; }
+  .dash-images        { grid-template-columns: repeat(2, 1fr); }
+  .dash-footer        { padding: 10px 16px; }
 }
