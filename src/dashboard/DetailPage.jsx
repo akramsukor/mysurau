@@ -1,5 +1,5 @@
 import { useEffect, useState, Fragment } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
 import { supabase } from '../lib/supabase.js';
 import { actionMeta } from './actionMeta.js';
@@ -157,7 +157,9 @@ function ImageStrip({ images, pending }) {
 /* ─── Main page ─── */
 export default function DetailPage() {
   const { auditId } = useParams();
+  const navigate = useNavigate();
   const [loading,    setLoading]    = useState(true);
+  const [busy,       setBusy]       = useState(false); // approve/reject in-flight
   const [error,      setError]      = useState(null);   // audit/pending fetch failure
   const [surauError, setSurauError] = useState(null);   // surau fetch failure (separate diagnosis)
   const [audit,      setAudit]      = useState(null);
@@ -267,6 +269,31 @@ export default function DetailPage() {
     return v !== null && v !== undefined && String(v).includes(' -> ');
   });
 
+  async function onApprove() {
+    setBusy(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch('/api/approve', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ auditId: Number(auditId) }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        alert(json.error || 'Approve failed');
+        return;
+      }
+      navigate('/dashboard');
+    } catch (err) {
+      alert(err.message || 'Approve failed');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="dash-detail">
     <div className="dash-detail-content">
@@ -347,6 +374,7 @@ export default function DetailPage() {
     <div className="dash-footer">
       <button
         className="dash-btn dash-btn--secondary"
+        disabled={busy}
         onClick={() => {
           console.log('reject', auditId);
           alert('Reject handler coming in Slice 6');
@@ -356,12 +384,10 @@ export default function DetailPage() {
       </button>
       <button
         className="dash-btn dash-btn--approve"
-        onClick={() => {
-          console.log('approve', auditId);
-          alert('Approve handler coming in Slice 5');
-        }}
+        disabled={busy}
+        onClick={onApprove}
       >
-        Approve ✓
+        {busy ? 'Approving…' : 'Approve ✓'}
       </button>
     </div>
 
