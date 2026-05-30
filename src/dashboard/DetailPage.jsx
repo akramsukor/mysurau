@@ -277,7 +277,8 @@ export default function DetailPage() {
   /* ── Derived data ── */
   const meta       = actionMeta(pending.action);
   const currentPt  = parsePointText(surau?.location_text);
-  const proposedPt = parsePointText(pending.location_text);
+  // Fall back to current location when pending has no location change
+  const proposedPt = pending.location_text != null ? parsePointText(pending.location_text) : currentPt;
   const activeDiffs = DIFF_FIELDS.filter(({ key }) => {
     const v = audit[key];
     return v !== null && v !== undefined && String(v).includes(' -> ');
