@@ -696,14 +696,14 @@ body.dashboard-page #root {
 }
 
 .dash-images-group__thumbs {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: 8px;
 }
 
-/* Each thumbnail or placeholder fills its equal share of the 4-up row */
+/* Thumbnail and placeholder fill their grid cell (100% of 1fr column) */
 .dash-image-thumb {
-  flex: 1;
-  min-width: 0;
+  width: 100%;
   aspect-ratio: 1;
   object-fit: cover;
   border-radius: var(--radius-sm);
@@ -711,16 +711,20 @@ body.dashboard-page #root {
   display: block;
 }
 
-/* Amber outline on proposed images that differ from current */
-.dash-image-cell--changed .dash-image-thumb,
-.dash-image-cell--changed .dash-image-empty {
+/* Wrapper div for proposed slots — sits as the grid item, img fills it */
+.dash-image-cell--changed {
   outline: 2px solid #FFB300;
   outline-offset: 1px;
+  border-radius: var(--radius-sm);
+}
+
+.dash-image-cell--changed .dash-image-thumb,
+.dash-image-cell--changed .dash-image-empty {
+  border-radius: calc(var(--radius-sm) - 1px);
 }
 
 .dash-image-empty {
-  flex: 1;
-  min-width: 0;
+  width: 100%;
   aspect-ratio: 1;
   background: var(--bg);
   border: 1.5px dashed var(--border);
@@ -730,6 +734,7 @@ body.dashboard-page #root {
   justify-content: center;
   color: var(--subtext);
   font-size: 0.85rem;
+  box-sizing: border-box;
 }
 
 /* Raw diff (collapsible) */
