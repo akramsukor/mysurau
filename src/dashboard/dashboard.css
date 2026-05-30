@@ -807,6 +807,70 @@ details[open] .dash-diff-summary::before { content: '▼ '; }
 .dash-detail-state__icon { font-size: 48px; margin-bottom: 12px; }
 .dash-detail-state__text { font-size: 1rem; color: var(--subtext); margin-bottom: 20px; }
 
+/* ─── Reject confirmation modal ─── */
+.dash-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000; /* above the fixed footer (1000) */
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.dash-modal {
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  padding: 28px 24px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+}
+
+.dash-modal__title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.dash-modal__sub {
+  font-size: 0.85rem;
+  color: var(--subtext);
+  margin-bottom: 20px;
+}
+
+.dash-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+/* Textarea variant of the existing dash-field__input */
+.dash-field__input--textarea {
+  resize: vertical;
+  font-family: inherit;
+  min-height: 80px;
+  line-height: 1.5;
+}
+
+/* Character counter below textarea */
+.dash-field__count {
+  font-size: 0.72rem;
+  color: var(--subtext);
+  text-align: right;
+  margin-top: 4px;
+}
+
+/* Red confirm-reject button */
+.dash-btn--reject {
+  background: #B71C1C;
+  color: white;
+}
+.dash-btn--reject:not(:disabled):hover { background: #D32F2F; opacity: 1; }
+
 /* ─── Responsive ─── */
 @media (max-width: 600px) {
   .dash-header        { padding: 0 16px; }

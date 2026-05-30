@@ -172,14 +172,17 @@ function ImageStrip({ images, pending }) {
 export default function DetailPage() {
   const { auditId } = useParams();
   const navigate = useNavigate();
-  const [loading,    setLoading]    = useState(true);
-  const [busy,       setBusy]       = useState(false); // approve/reject in-flight
-  const [error,      setError]      = useState(null);   // audit/pending fetch failure
-  const [surauError, setSurauError] = useState(null);   // surau fetch failure (separate diagnosis)
-  const [audit,      setAudit]      = useState(null);
-  const [pending,    setPending]    = useState(null);
-  const [surau,      setSurau]      = useState(null);
-  const [images,     setImages]     = useState([]);
+  const [loading,         setLoading]         = useState(true);
+  const [busy,            setBusy]            = useState(false);
+  const [error,           setError]           = useState(null);
+  const [surauError,      setSurauError]      = useState(null);
+  const [audit,           setAudit]           = useState(null);
+  const [pending,         setPending]         = useState(null);
+  const [surau,           setSurau]           = useState(null);
+  const [images,          setImages]          = useState([]);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectReason,    setRejectReason]    = useState('');
+  const [rejecting,       setRejecting]       = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -309,6 +312,31 @@ export default function DetailPage() {
     }
   }
 
+  async function onReject() {
+    setRejecting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch('/api/reject', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ auditId: Number(auditId), reason: rejectReason.trim() || null }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        alert(json.error || 'Reject failed');
+        return;
+      }
+      navigate('/dashboard');
+    } catch (err) {
+      alert(err.message || 'Reject failed');
+    } finally {
+      setRejecting(false);
+    }
+  }
+
   return (
     <div className="dash-detail">
     <div className="dash-detail-content">
@@ -395,22 +423,66 @@ export default function DetailPage() {
     <div className="dash-footer">
       <button
         className="dash-btn dash-btn--secondary"
-        disabled={busy}
-        onClick={() => {
-          console.log('reject', auditId);
-          alert('Reject handler coming in Slice 6');
-        }}
+        disabled={busy || rejecting}
+        onClick={() => setShowRejectModal(true)}
       >
         Reject
       </button>
       <button
         className="dash-btn dash-btn--approve"
-        disabled={busy}
+        disabled={busy || rejecting}
         onClick={onApprove}
       >
         {busy ? 'Approving…' : 'Approve ✓'}
       </button>
     </div>
+
+    {/* ── Reject confirmation modal ── */}
+    {showRejectModal && (
+      <div
+        className="dash-modal-overlay"
+        onClick={() => !rejecting && setShowRejectModal(false)}
+      >
+        <div className="dash-modal" onClick={e => e.stopPropagation()}>
+          <h3 className="dash-modal__title">Reject this request?</h3>
+          <p className="dash-modal__sub">
+            The surau will not be changed. This action can't be undone.
+          </p>
+          <div className="dash-field">
+            <label className="dash-field__label" htmlFor="reject-reason">
+              Reason for rejection (optional)
+            </label>
+            <textarea
+              id="reject-reason"
+              className="dash-field__input dash-field__input--textarea"
+              rows={3}
+              maxLength={200}
+              value={rejectReason}
+              onChange={e => setRejectReason(e.target.value)}
+              placeholder="e.g. Incorrect information, duplicate entry…"
+              disabled={rejecting}
+            />
+            <p className="dash-field__count">{rejectReason.length}/200</p>
+          </div>
+          <div className="dash-modal__actions">
+            <button
+              className="dash-btn dash-btn--secondary"
+              onClick={() => setShowRejectModal(false)}
+              disabled={rejecting}
+            >
+              Cancel
+            </button>
+            <button
+              className="dash-btn dash-btn--reject"
+              onClick={onReject}
+              disabled={rejecting}
+            >
+              {rejecting ? 'Rejecting…' : 'Confirm Reject'}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
 
   </div>
   );
