@@ -66,7 +66,7 @@ async function promoteSuggestionImage(suggestionUrl, surauId, position) {
 async function handleRequestAdd(pending, adminUserId, adminEmail) {
   await supabaseAdmin.from('surau').update({ approved: true }).eq('id', pending.surau_id);
   await supabaseAdmin.from('pending_approval').delete().eq('id', pending.id);
-  await supabaseAdmin.from('audit_history').insert({
+  const { error: auditErr } = await supabaseAdmin.from('audit_history').insert({
     surau_id:     pending.surau_id,
     user_id:      adminUserId,
     user_email:   adminEmail,
@@ -79,6 +79,7 @@ async function handleRequestAdd(pending, adminUserId, adminEmail) {
     status:       pending.status,
     address:      pending.address || null,
   });
+  if (auditErr) throw auditErr;
 }
 
 async function handleRequestChange(pending, adminUserId, adminEmail) {
@@ -128,7 +129,7 @@ async function handleRequestChange(pending, adminUserId, adminEmail) {
   function curImageUrl(pos) { return curImages.find(i => i.position === pos)?.url ?? ''; }
   function newImageUrl(pos) { return promotedUrls[pos] ?? pending[`image_${pos}`] ?? ''; }
 
-  await supabaseAdmin.from('audit_history').insert({
+  const { error: auditErr } = await supabaseAdmin.from('audit_history').insert({
     surau_id:      pending.surau_id,
     user_id:       adminUserId,
     user_email:    adminEmail,
@@ -145,6 +146,7 @@ async function handleRequestChange(pending, adminUserId, adminEmail) {
     image_3:       pending.image_3       !== null ? diff(curImageUrl(3),     newImageUrl(3))        : null,
     image_4:       pending.image_4       !== null ? diff(curImageUrl(4),     newImageUrl(4))        : null,
   });
+  if (auditErr) throw auditErr;
 }
 
 async function handleRequestDelete(pending, adminUserId, adminEmail) {
@@ -167,13 +169,9 @@ async function handleRequestDelete(pending, adminUserId, adminEmail) {
     }
   }
 
-  // Delete the surau (cascades surau_images rows if FK cascade is set;
-  // explicit delete below handles the case where it isn't)
-  await supabaseAdmin.from('surau_images').delete().eq('surau_id', pending.surau_id);
-  await supabaseAdmin.from('surau').delete().eq('id', pending.surau_id);
-  await supabaseAdmin.from('pending_approval').delete().eq('id', pending.id);
-
-  await supabaseAdmin.from('audit_history').insert({
+  // Audit insert BEFORE surau delete: ON DELETE SET NULL only nulls existing rows;
+  // a new insert with a dead surau_id would violate the FK.
+  const { error: auditErr } = await supabaseAdmin.from('audit_history').insert({
     surau_id:      pending.surau_id,
     user_id:       adminUserId,
     user_email:    adminEmail,
@@ -187,6 +185,13 @@ async function handleRequestDelete(pending, adminUserId, adminEmail) {
     address:       cur?.address || null,
     reason:        pending.reason,
   });
+  if (auditErr) throw auditErr;
+
+  // Delete the surau (cascades surau_images rows if FK cascade is set;
+  // explicit delete below handles the case where it isn't)
+  await supabaseAdmin.from('surau_images').delete().eq('surau_id', pending.surau_id);
+  await supabaseAdmin.from('surau').delete().eq('id', pending.surau_id);
+  await supabaseAdmin.from('pending_approval').delete().eq('id', pending.id);
 }
 
 /* ─── Route handler ─── */
