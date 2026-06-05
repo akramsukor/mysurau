@@ -877,6 +877,352 @@ body {
   cursor: pointer; font-size: 14px; padding: 2px 6px;
 }
 
+/* ══════════════════════════════════════════════════════════
+   Slice 2 — Hero + PrayerPill + PrayerTimesSheet
+   ══════════════════════════════════════════════════════════ */
+
+/* ── Shimmer skeleton animation ── */
+@keyframes shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Light shimmer: white-on-teal, used inside Hero */
+.shimmer-light {
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.20);
+}
+.shimmer-light::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent);
+  animation: shimmer 1.4s ease infinite;
+}
+
+/* Gray shimmer: used on white/light surfaces (PrayerPill skeleton) */
+.shimmer-gray {
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.06);
+}
+.shimmer-gray::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.7), transparent);
+  animation: shimmer 1.4s ease infinite;
+}
+
+/* ── Hero ── */
+.hero {
+  background: var(--brand-primary);
+  flex-shrink: 0;
+  padding: 12px 16px 44px; /* extra bottom padding leaves room for PrayerPill overlap */
+}
+
+.hero__inner {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.hero__left {
+  flex: 1;
+  min-width: 0;
+}
+
+.hero__location-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hero__location-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--white-100);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hero__refresh-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.80);
+  padding: 0 2px;
+  line-height: 1;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hero__date {
+  font-size: 13px;
+  color: var(--white-70);
+  margin-top: 4px;
+  line-height: 1.3;
+}
+
+/* Skeleton placeholders */
+.hero__skeleton {
+  display: block;
+}
+.hero__skeleton--name {
+  width: 160px;
+  height: 16px;
+  margin-bottom: 8px;
+}
+.hero__skeleton--date {
+  width: 200px;
+  height: 12px;
+}
+
+/* Hamburger */
+.hero__menu-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--white-100);
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── Prayer Pill ── */
+.pp-outer {
+  display: flex;
+  justify-content: center;
+  padding: 0 16px;
+  margin-top: -28px;  /* pulls pill up to overlap hero/map boundary */
+  position: relative;
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+.pp-card {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 720px;
+  background: #fff;
+  border-radius: var(--radius-card);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+  padding: 14px 16px;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+  transition: box-shadow 0.15s;
+}
+
+.pp-card:active {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.10);
+}
+
+.pp-card--skeleton {
+  cursor: default;
+  pointer-events: none;
+}
+
+.pp-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.pp-col--right {
+  align-items: flex-end;
+}
+
+.pp-label {
+  font-size: 12px;
+  color: var(--text-72);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pp-time {
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--text-100);
+  letter-spacing: 0.2px;
+  line-height: 1.1;
+}
+
+.pp-divider {
+  width: 1px;
+  height: 40px;
+  background: rgba(0, 0, 0, 0.08);
+  margin: 0 16px;
+  flex-shrink: 0;
+}
+
+/* Skeleton blocks inside PrayerPill */
+.pp-sk {
+  display: block;
+}
+.pp-sk--label {
+  width: 80px;
+  height: 12px;
+}
+.pp-sk--label.pp-sk--wide {
+  width: 110px;
+}
+.pp-sk--time {
+  width: 64px;
+  height: 22px;
+}
+
+/* ── Prayer Times Sheet ── */
+.pts-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0 var(--page-padding) var(--page-padding);
+}
+
+.pts-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 0 16px;
+}
+
+.pts-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-100);
+}
+
+.pts-close-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--surface-fill-8);
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--text-72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pts-date-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0 16px;
+  border-bottom: 1px solid var(--surface-fill-8);
+  margin-bottom: 4px;
+}
+
+.pts-chevron {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--surface-fill-4);
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  color: var(--text-72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.pts-chevron:active {
+  background: var(--surface-fill-8);
+}
+
+.pts-date-center {
+  text-align: center;
+  flex: 1;
+}
+
+.pts-date-greg {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-100);
+}
+
+.pts-date-hijri {
+  font-size: 12px;
+  color: var(--text-48);
+  margin-top: 2px;
+}
+
+.pts-loading {
+  padding: 24px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-48);
+}
+
+.pts-rows {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.pts-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--row-height);
+  padding: 0 4px;
+  border-bottom: 1px solid var(--surface-fill-4);
+}
+
+.pts-row:last-child {
+  border-bottom: none;
+}
+
+.pts-row--current {
+  background: rgba(0, 140, 179, 0.08); /* brand-primary @ 8% */
+  border-left: 3px solid var(--brand-primary);
+  padding-left: 12px;
+  border-radius: 4px;
+}
+
+.pts-row__name {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-100);
+}
+
+.pts-row__time {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-72);
+}
+
+.pts-attribution {
+  padding-top: 12px;
+  font-size: 11px;
+  color: var(--text-24);
+  text-align: center;
+}
+
 /* ─────────────────── Animations ─────────────────── */
 @keyframes spin {
   to { transform: rotate(360deg); }

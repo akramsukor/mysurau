@@ -1,56 +1,60 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import MapView from './components/MapView';
-import PrayerTimeBar from './components/PrayerTimeBar';
 import SearchPanel from './components/SearchPanel';
 import ZoneSelector from './components/ZoneSelector';
+import Hero from './components/Hero';
+import PrayerPill from './components/PrayerPill';
+import PrayerTimesSheet from './components/PrayerTimesSheet';
+import useLocation from './hooks/useLocation';
+import usePrayerTimes from './hooks/usePrayerTimes';
 import { fetchNearbySurau } from './utils/overpassApi';
-import { fetchPrayerTimes } from './utils/prayerApi';
 import { reverseGeocode } from './utils/zoneDetection';
 
-const DEFAULT_LOCATION = { lat: 3.139, lon: 101.6869 }; // Kuala Lumpur
+const DEFAULT_LOCATION = { lat: 3.139, lon: 101.6869 };
 
 export default function App() {
+  // ── New hooks (Slice 2) ──────────────────────────────────────────
+  const loc    = useLocation();
+  const prayer = usePrayerTimes();
+
+  // Fetch prayer times whenever the zone resolves
+  useEffect(() => {
+    if (loc.zoneCode) prayer.fetch(loc.zoneCode);
+  }, [loc.zoneCode]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Legacy map / surau state (Slice 3 will move this to useSuraus) ──
+  const [mapCenter,    setMapCenter]    = useState(DEFAULT_LOCATION);
   const [userLocation, setUserLocation] = useState(null);
-  const [mapCenter, setMapCenter] = useState(DEFAULT_LOCATION);
-  const [locationName, setLocationName] = useState('Mencari lokasi…');
-  const [zone, setZone] = useState('WLY01');
-  const [zoneName, setZoneName] = useState('Kuala Lumpur');
-
-  const [prayerTimes, setPrayerTimes] = useState(null);
-  const [surauList, setSurauList] = useState([]);
-
-  const [loadingLocation, setLoadingLocation] = useState(true);
+  const [surauList,    setSurauList]    = useState([]);
   const [loadingSurau, setLoadingSurau] = useState(false);
-  const [locationError, setLocationError] = useState(null); // 'denied' | 'unavailable' | 'timeout' | null
-
   const [selectedSurau, setSelectedSurau] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterType, setFilterType] = useState('all');
+  const [searchQuery,  setSearchQuery]  = useState('');
+  const [filterType,   setFilterType]   = useState('all');
   const [showZoneSelector, setShowZoneSelector] = useState(false);
-  const [error, setError] = useState(null);
+  const [locationError, setLocationError] = useState(null);
+  const [error,        setError]        = useState(null);
 
   const surauFetchRef = useRef(null);
 
-  /* ─── Load prayer times ─── */
-  const loadPrayerTimes = useCallback(async (zoneCode) => {
-    try {
-      const times = await fetchPrayerTimes(zoneCode);
-      setPrayerTimes(times);
-    } catch (err) {
-      console.error('Prayer times error:', err);
+  // Keep map centre in sync with the location hook
+  useEffect(() => {
+    if (loc.location) {
+      setUserLocation({ lat: loc.location.lat, lon: loc.location.lng });
+      setMapCenter(prev => ({
+        lat: loc.location.lat,
+        lon: loc.location.lng,
+        _ts: prev._ts, // preserve recenter trigger
+      }));
     }
-  }, []);
+  }, [loc.location]);
 
-  /* ─── Load nearby surau ─── */
   const loadSurau = useCallback(async (lat, lon, attempt = 1) => {
-    // Cancel any previous fetch
     if (surauFetchRef.current) surauFetchRef.current = false;
     const token = {};
     surauFetchRef.current = token;
 
     setLoadingSurau(true);
     setError(null);
-
     try {
       const results = await fetchNearbySurau(lat, lon, 5000);
       if (surauFetchRef.current === token) {
@@ -58,7 +62,6 @@ export default function App() {
         setLoadingSurau(false);
       }
     } catch (err) {
-      console.error(`Surau fetch error (attempt ${attempt}):`, err);
       if (surauFetchRef.current === token) {
         if (attempt < 3) {
           setTimeout(() => loadSurau(lat, lon, attempt + 1), attempt * 3000);
@@ -70,84 +73,37 @@ export default function App() {
     }
   }, []);
 
-  /* ─── Init: detect location ─── */
+  // Load suraus when location resolves
   useEffect(() => {
-    if (!navigator.geolocation) {
-      setLocationName('Kuala Lumpur');
-      setLoadingLocation(false);
+    if (loc.location) {
+      loadSurau(loc.location.lat, loc.location.lng);
+    } else if (!loc.isLocating) {
+      // Geolocation denied/unavailable — load for default KL
       loadSurau(DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lon);
-      loadPrayerTimes('WLY01');
-      return;
     }
+  }, [loc.location, loc.isLocating]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const coords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
-        setUserLocation(coords);
-        setMapCenter(coords);
-        setLoadingLocation(false);
+  const handleLocateMe = useCallback(() => {
+    loc.requestLocation();
+    setLocationError(null);
+  }, [loc]);
 
-        // Reverse geocode → zone
-        const geo = await reverseGeocode(coords.lat, coords.lon);
-        if (geo) {
-          setLocationName(geo.displayName);
-          setZone(geo.zone);
-          setZoneName(geo.zoneName);
-          loadPrayerTimes(geo.zone);
-        } else {
-          loadPrayerTimes('WLY01');
-        }
+  const handleRefresh = useCallback(() => {
+    const lat = loc.location?.lat ?? DEFAULT_LOCATION.lat;
+    const lon = loc.location?.lng ?? DEFAULT_LOCATION.lon;
+    loadSurau(lat, lon);
+    if (loc.zoneCode) prayer.fetch(loc.zoneCode);
+  }, [loc, loadSurau, prayer]);
 
-        loadSurau(coords.lat, coords.lon);
-      },
-      (err) => {
-        console.warn('Geolocation error:', err.code, err.message);
-        if (err.code === 1) setLocationError('denied');
-        else if (err.code === 2) setLocationError('unavailable');
-        else setLocationError('timeout');
-        setLocationName('Kuala Lumpur');
-        setLoadingLocation(false);
-        loadSurau(DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lon);
-        loadPrayerTimes('WLY01');
-      },
-      { enableHighAccuracy: true, timeout: 20000, maximumAge: 60000 }
-    );
-  }, [loadSurau, loadPrayerTimes]);
+  const handleZoneChange = useCallback((newZone) => {
+    prayer.fetch(newZone);
+  }, [prayer]);
 
-  /* ─── Handlers ─── */
-  const handleLocateMe = () => {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const coords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
-        setUserLocation(coords);
-        setMapCenter({ ...coords, _ts: Date.now() }); // force recenter
-        setLocationError(null);
-        loadSurau(coords.lat, coords.lon);
-      },
-      (err) => {
-        if (err.code === 1) setLocationError('denied');
-        else if (err.code === 2) setLocationError('unavailable');
-        else setLocationError('timeout');
-      },
-      { enableHighAccuracy: true, timeout: 12000 }
-    );
-  };
+  // ── Prayer sheet ──────────────────────────────────────────────────
+  const [prayerSheetOpen, setPrayerSheetOpen] = useState(false);
 
-  const handleRefresh = () => {
-    const loc = userLocation || DEFAULT_LOCATION;
-    loadSurau(loc.lat, loc.lon);
-    loadPrayerTimes(zone);
-  };
-
-  const handleZoneChange = (newZone, newZoneName) => {
-    setZone(newZone);
-    setZoneName(newZoneName);
-    loadPrayerTimes(newZone);
-  };
-
-  /* ─── Loading splash ─── */
-  if (loadingLocation) {
+  // ── Splash while waiting for location ──────────────────────────────
+  if (!loc.locationName) {
     return (
       <div className="splash">
         <div className="splash__content">
@@ -162,16 +118,25 @@ export default function App() {
 
   return (
     <div className="app">
-      {/* Header: prayer times */}
-      <PrayerTimeBar
-        prayerTimes={prayerTimes}
-        locationName={locationName}
-        zone={zoneName || zone}
-        zoneCode={zone}
-        onZoneClick={() => setShowZoneSelector(true)}
+      {/* ── Teal hero header ── */}
+      <Hero
+        locationName={loc.locationName}
+        hijriDate={prayer.hijriDate}
+        onRefresh={handleLocateMe}
+        onOpenMenu={() => console.warn('Menu drawer — Slice 6')}
       />
 
-      {/* Map */}
+      {/* ── Prayer pill (overlaps hero/map boundary) ── */}
+      <PrayerPill
+        currentPrayerName={prayer.currentPrayerName}
+        currentPrayerTime={prayer.currentPrayerTime}
+        nextPrayerName={prayer.nextPrayerName}
+        nextPrayerTime={prayer.nextPrayerTime}
+        countdown={prayer.countdown}
+        onOpenPrayerSheet={() => setPrayerSheetOpen(true)}
+      />
+
+      {/* ── Map ── */}
       <div className="app__map">
         <MapView
           center={mapCenter}
@@ -184,21 +149,21 @@ export default function App() {
         />
       </div>
 
-      {/* Location permission banner */}
+      {/* ── Location error banner ── */}
       {locationError && (
         <div className="location-banner">
           <span>
             {locationError === 'denied'
-              ? 'Akses lokasi ditolak. Benarkan akses lokasi dalam tetapan pelayar anda, kemudian tekan 📍.'
+              ? 'Akses lokasi ditolak. Benarkan akses lokasi dalam tetapan pelayar anda.'
               : locationError === 'unavailable'
               ? 'Lokasi tidak dapat dikesan. Menunjukkan Kuala Lumpur sebagai lalai.'
-              : 'Masa mencari lokasi tamat. Tekan 📍 untuk cuba semula.'}
+              : 'Masa mencari lokasi tamat. Tekan butang lokasi untuk cuba semula.'}
           </span>
           <button className="error-banner__close" onClick={() => setLocationError(null)}>✕</button>
         </div>
       )}
 
-      {/* Error banner */}
+      {/* ── Surau fetch error banner ── */}
       {error && (
         <div className="error-banner">
           ⚠️ {error}
@@ -206,7 +171,7 @@ export default function App() {
         </div>
       )}
 
-      {/* Bottom search panel */}
+      {/* ── Bottom search panel ── */}
       <SearchPanel
         surauList={surauList}
         userLocation={userLocation}
@@ -219,14 +184,25 @@ export default function App() {
         loading={loadingSurau}
       />
 
-      {/* Zone selector modal */}
+      {/* ── Zone selector (legacy, still used by SearchPanel area) ── */}
       {showZoneSelector && (
         <ZoneSelector
-          currentZone={zone}
+          currentZone={loc.zoneCode}
           onSelect={handleZoneChange}
           onClose={() => setShowZoneSelector(false)}
         />
       )}
+
+      {/* ── Prayer times sheet ── */}
+      <PrayerTimesSheet
+        open={prayerSheetOpen}
+        onClose={() => setPrayerSheetOpen(false)}
+        sheetPrayerTime={prayer.sheetPrayerTime}
+        sheetHijri={prayer.sheetHijri}
+        currentPrayerIndex={prayer.currentPrayerIndex}
+        isLoadingSheet={prayer.isLoadingSheet}
+        fetchForDate={prayer.fetchForDate}
+      />
     </div>
   );
 }
