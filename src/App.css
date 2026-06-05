@@ -1,9 +1,65 @@
-/* ═══════════════════════════════════════════
-   MySurau – Global Styles
-   Mobile-first, Islamic green & blue theme
-   ═══════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════
+   MySurau – Design System (Slice 1)
+   MD3 brand tokens + global resets
+   Legacy tokens kept at bottom; removed slice-by-slice.
+   ═══════════════════════════════════════════════════════════ */
 
+/* ── Custom fonts ── */
+@font-face {
+  font-family: 'Rajdhani';
+  src: url('/fonts/Rajdhani-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'PixelifySans';
+  src: url('/fonts/PixelifySans-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ── Brand tokens ── */
 :root {
+  /* Brand */
+  --brand-primary:    #008CB3;
+  --brand-on-primary: #FFFFFF;
+  --brand-error:      #FF383C;
+
+  /* Text on light surfaces (black at opacity) */
+  --text-100: #000000;
+  --text-72:  rgba(0, 0, 0, 0.72);
+  --text-48:  rgba(0, 0, 0, 0.48);
+  --text-24:  rgba(0, 0, 0, 0.24);
+
+  /* White opacities — for use over teal hero */
+  --white-100: #FFFFFF;
+  --white-72:  rgba(255, 255, 255, 0.72);
+  --white-70:  rgba(255, 255, 255, 0.70);
+  --white-16:  rgba(255, 255, 255, 0.16);
+
+  /* Surface fills (black at opacity) */
+  --surface-fill-4:  rgba(0, 0, 0, 0.04);
+  --surface-fill-8:  rgba(0, 0, 0, 0.08);
+  --surface-fill-24: rgba(0, 0, 0, 0.24);
+  --surface-fill-48: rgba(0, 0, 0, 0.48);
+  --surface-fill-72: rgba(0, 0, 0, 0.72);
+
+  /* Spacing */
+  --page-padding:    24px;
+  --section-spacing: 24px;
+  --row-height:      64px;
+  --input-height:    56px;
+  --avatar-size:     40px;
+
+  /* Radii */
+  --radius-card:   14px;
+  --radius-pill:   28px;
+  --radius-input:  10px;
+
+  /* ── Legacy tokens (used by current components — removed slice by slice) ── */
   --green-900: #1B5E20;
   --green-800: #2E7D32;
   --green-700: #388E3C;
@@ -24,20 +80,196 @@
   --radius-md: 14px;
   --radius-lg: 22px;
   --prayer-bar-height: 118px;
-  --panel-peek: 136px; /* how much of the bottom panel is always visible */
+  --panel-peek:     136px;
   --panel-expanded: 72vh;
 }
 
+/* ── Global reset ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body, #root { height: 100%; overflow: hidden; }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+               'Helvetica Neue', Arial, sans-serif;
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
 }
+
+/* ══════════════════════════════════════════════════════════
+   UI Primitives — BottomSheet
+   ══════════════════════════════════════════════════════════ */
+
+.bs-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  transition: background 0.3s ease;
+}
+
+.bs-backdrop--in {
+  background: rgba(0, 0, 0, 0.48);
+}
+
+.bs-sheet {
+  width: 100%;
+  background: #fff;
+  border-radius: 20px 20px 0 0;
+  overflow: hidden;
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
+  display: flex;
+  flex-direction: column;
+  /* Prevent sheet from shrinking below its detent */
+  flex-shrink: 0;
+}
+
+.bs-sheet--in {
+  transform: translateY(0);
+}
+
+.bs-handle-row {
+  display: flex;
+  justify-content: center;
+  padding: 12px 0 8px;
+  flex-shrink: 0;
+  cursor: grab;
+}
+
+.bs-handle-row:active { cursor: grabbing; }
+
+.bs-handle {
+  width: 36px;
+  height: 4px;
+  background: rgba(0, 0, 0, 0.16);
+  border-radius: 2px;
+}
+
+.bs-content {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ══════════════════════════════════════════════════════════
+   UI Primitives — PillButton
+   ══════════════════════════════════════════════════════════ */
+
+.pill-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 56px;
+  border-radius: var(--radius-pill);
+  background: #000;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 500;
+  font-family: inherit;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.pill-btn--enabled:active {
+  opacity: 0.8;
+}
+
+/* ══════════════════════════════════════════════════════════
+   UI Primitives — InputField
+   ══════════════════════════════════════════════════════════ */
+
+.input-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.input-field__label {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--text-72);
+  font-family: inherit;
+}
+
+.input-field__input {
+  height: var(--input-height);
+  border-radius: var(--radius-input);
+  background: var(--surface-fill-4);
+  border: none;
+  outline: none;
+  padding: 0 16px;
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--text-100);
+  font-family: inherit;
+  width: 100%;
+  transition: background 0.15s;
+}
+
+.input-field__input::placeholder {
+  color: var(--text-24);
+}
+
+.input-field__input:focus {
+  background: var(--surface-fill-8);
+}
+
+/* ══════════════════════════════════════════════════════════
+   UI Primitives — Toggle
+   52 × 32 capsule, iOS spring knob, brand teal when on
+   ══════════════════════════════════════════════════════════ */
+
+.toggle {
+  width: 52px;
+  height: 32px;
+  border-radius: 16px;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  padding: 0;
+  background: #C7C7CC;  /* iOS systemGray3 */
+  transition: background 0.25s ease;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.toggle--on {
+  background: var(--brand-primary);
+}
+
+.toggle__knob {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.25),
+    0 1px 8px rgba(0, 0, 0, 0.12);
+  /* Spring ease: slight overshoot to match iOS spring animation */
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.toggle--on .toggle__knob {
+  transform: translateX(20px);
+}
+
+/* ══════════════════════════════════════════════════════════
+   Legacy component styles
+   Kept intact so existing public components render during
+   the transition. Removed slice-by-slice as each component
+   is rebuilt.
+   ══════════════════════════════════════════════════════════ */
 
 /* ─────────────────── Splash screen ─────────────────── */
 .splash {
@@ -227,7 +459,6 @@ body {
   font-size: 0.65rem; color: #888; font-weight: 400;
 }
 
-
 .prayer-expand__time {
   font-weight: 700; font-size: 1rem;
 }
@@ -256,7 +487,6 @@ body {
 
 .leaflet-control-attribution { display: none !important; }
 
-/* Floating action buttons */
 .map-fabs {
   position: absolute;
   bottom: calc(var(--panel-peek) + 16px);
@@ -278,7 +508,6 @@ body {
 .map-fab:hover { transform: scale(1.08); }
 .map-fab:active { transform: scale(0.95); }
 
-/* Zoom controls */
 .map-zoom {
   position: absolute;
   top: 12px; right: 12px;
@@ -360,9 +589,7 @@ body {
   user-select: none; -webkit-user-select: none;
 }
 
-.search-panel__handle:active {
-  cursor: grabbing;
-}
+.search-panel__handle:active { cursor: grabbing; }
 
 .search-panel__handle-bar {
   width: 40px; height: 4px;
@@ -371,7 +598,6 @@ body {
   pointer-events: none;
 }
 
-/* Search input */
 .search-panel__input-row {
   padding: 0 12px 8px; flex-shrink: 0;
 }
@@ -403,7 +629,6 @@ body {
   font-size: 13px; color: var(--subtext); padding: 4px;
 }
 
-/* Filter tabs */
 .filter-tabs {
   display: flex; gap: 6px; padding: 0 12px 8px; flex-shrink: 0;
   overflow-x: auto; scrollbar-width: none; align-items: center;
@@ -432,7 +657,6 @@ body {
   white-space: nowrap; flex-shrink: 0;
 }
 
-/* Surau list */
 .surau-list {
   flex: 1; overflow-y: auto; padding: 0 12px 12px;
   -webkit-overflow-scrolling: touch;
@@ -458,6 +682,7 @@ body {
 }
 
 .surau-list__empty-icon { font-size: 40px; margin-bottom: 8px; }
+
 .surau-list__group-header {
   padding: 8px 16px 4px;
   font-size: 12px;
@@ -623,7 +848,7 @@ body {
 
 .zone-item__check { color: var(--green-700); font-weight: 800; font-size: 1rem; }
 
-/* ─────────────────── Location banner ─────────────────── */
+/* ─────────────────── Location / error banners ─────────────────── */
 .location-banner {
   position: absolute;
   top: 8px; left: 12px; right: 12px;
@@ -636,7 +861,6 @@ body {
   box-shadow: 0 2px 12px rgba(0,0,0,0.25);
 }
 
-/* ─────────────────── Error banner ─────────────────── */
 .error-banner {
   position: absolute;
   top: 8px; left: 12px; right: 12px;
@@ -660,9 +884,7 @@ body {
 
 /* ─────────────────── Responsive tweaks ─────────────────── */
 @media (min-width: 480px) {
-  :root {
-    --panel-peek: 150px;
-  }
+  :root { --panel-peek: 150px; }
 }
 
 @media (min-width: 768px) {
@@ -671,10 +893,7 @@ body {
     --panel-expanded: 60vh;
   }
 
-  .prayer-bar {
-    padding: 12px 20px 8px;
-  }
-
+  .prayer-bar { padding: 12px 20px 8px; }
   .prayer-pill__time { font-size: 1.8rem; }
 
   .zone-overlay { align-items: center; justify-content: center; }
