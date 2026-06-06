@@ -1,6 +1,21 @@
 # MySurau
 
-Surau/mosque finder for Malaysia. Live at [mysurau.com](https://mysurau.com).
+MySurau is a mobile-first web app for finding suraus and mosques across Malaysia. It shows nearby prayer halls on an interactive map, displays live prayer times for your JAKIM zone, and includes a Qibla compass and a community feedback flow. Write actions (adding or editing venues) require the iOS app; the web surface is read-only by design. An admin dashboard at `/dashboard` lets approved contributors review and approve community-submitted surau records.
+
+## Route table
+
+| Route | Surface | Auth required |
+|---|---|---|
+| `/` | Public map + prayer times | None |
+| `/dashboard` | Admin review queue + detail page | Supabase Google OAuth (`profiles.admin = true`) |
+
+## Known limitations
+
+- **Prayer notifications are foreground-only.** The Web Notifications API fires alerts while the tab is open. Background / lock-screen notifications require the iOS app.
+- **No write actions on web.** Suggesting edits or adding a new surau opens the "Download App" sheet — all contributions flow through the iOS app.
+- **Mobile Safari notifications require PWA install.** The browser permission prompt only appears after the user adds MySurau to their home screen.
+
+---
 
 ## Local development
 
