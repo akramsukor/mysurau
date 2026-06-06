@@ -485,47 +485,84 @@ body {
   width: 100%; height: 100%;
 }
 
+/* Hide Leaflet's built-in attribution (we render our own) */
 .leaflet-control-attribution { display: none !important; }
 
-.map-fabs {
+/* ── iOS-style controls — bottom-right stack ── */
+.map-controls {
   position: absolute;
   bottom: calc(var(--panel-peek) + 16px);
   right: 12px;
-  display: flex; flex-direction: column; gap: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
   z-index: 500;
 }
 
-.map-fab {
-  width: 44px; height: 44px;
-  background: var(--surface);
-  border: none; border-radius: 50%;
-  box-shadow: 0 2px 8px var(--shadow);
-  cursor: pointer; font-size: 18px;
-  display: flex; align-items: center; justify-content: center;
-  transition: transform 0.15s;
+/* Base button: 44px white circle with drop shadow */
+.map-ctrl-btn {
+  width: 44px;
+  height: 44px;
+  background: #fff;
+  border: none;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #333;
+  font-size: 20px;
+  font-weight: 500;
+  transition: box-shadow 0.15s, transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
+}
+.map-ctrl-btn:active { transform: scale(0.93); }
+
+/* Zoom card: two buttons stacked in a rounded white pill */
+.map-ctrl-zoom {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-.map-fab:hover { transform: scale(1.08); }
-.map-fab:active { transform: scale(0.95); }
+.map-ctrl-btn--zoom {
+  border-radius: 0;
+  box-shadow: none;
+  width: 44px;
+  height: 44px;
+  font-size: 22px;
+}
+.map-ctrl-btn--zoom:active { transform: scale(0.93); }
 
-.map-zoom {
+.map-ctrl-zoom-divider {
+  height: 1px;
+  background: rgba(0, 0, 0, 0.08);
+  margin: 0 8px;
+}
+
+/* ── OSM attribution — bottom-left ── */
+.map-osm-attr {
   position: absolute;
-  top: 12px; right: 12px;
-  display: flex; flex-direction: column;
+  bottom: calc(var(--panel-peek) + 6px);
+  left: 8px;
+  font-size: 11px;
+  color: rgba(0, 0, 0, 0.55);
+  background: rgba(255, 255, 255, 0.75);
+  padding: 2px 5px;
+  border-radius: 4px;
   z-index: 500;
+  pointer-events: none;
 }
-
-.map-zoom-btn {
-  width: 36px; height: 36px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  cursor: pointer; font-size: 1.2rem; font-weight: 700;
-  display: flex; align-items: center; justify-content: center;
+.map-osm-attr a {
+  color: inherit;
+  pointer-events: auto;
+  text-decoration: underline;
 }
-
-.map-zoom-btn:first-child { border-radius: 6px 6px 0 0; }
-.map-zoom-btn:last-child  { border-radius: 0 0 6px 6px; border-top: none; }
-.map-zoom-btn:hover { background: var(--bg); }
 
 /* ─────────────────── Leaflet popup overrides ─────────────────── */
 .leaflet-popup-content-wrapper {
