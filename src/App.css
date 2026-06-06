@@ -1446,6 +1446,218 @@ body {
 .sc-sk--row   { height: 20px; width: 100%;  margin-top: 8px;  }
 
 /* ══════════════════════════════════════════════════════════
+   Slice 7 — SurauDetailSheet (read-only)
+   ══════════════════════════════════════════════════════════ */
+
+.sds-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.sds-header {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 16px 0;
+  flex-shrink: 0;
+}
+
+.sds-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 16px 32px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Image area 16:9 ── */
+.sds-image-wrap {
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  margin-bottom: 16px;
+  background: var(--surface-fill-8);
+  position: relative;
+}
+
+.sds-image-skeleton {
+  width: 100%;
+  height: 100%;
+}
+
+.sds-carousel {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.sds-carousel::-webkit-scrollbar { display: none; }
+
+.sds-carousel__img {
+  flex-shrink: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  scroll-snap-align: start;
+}
+
+.sds-dots {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.sds-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.55);
+  transition: width 0.2s, background 0.2s;
+  flex-shrink: 0;
+}
+.sds-dot--active {
+  width: 16px;
+  background: #fff;
+}
+
+.sds-image-empty {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.sds-image-empty__label {
+  font-size: 14px;
+  color: var(--text-48);
+  margin: 0;
+}
+
+/* ── Title block ── */
+.sds-title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.sds-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-100);
+  line-height: 1.3;
+  flex: 1;
+  margin: 0;
+}
+
+.sds-approved {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #007AFF; /* iOS system blue — verified badge */
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 4px; /* align with cap-height of sds-name */
+}
+
+.sds-address {
+  font-size: 16px;
+  color: var(--text-72);
+  margin: 8px 0 0;
+  line-height: 1.4;
+}
+
+/* ── Status pills ── */
+.sds-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.sds-pill {
+  font-size: 14px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 16px;
+}
+
+.sds-pill--teal {
+  background: rgba(0, 140, 179, 0.12);
+  color: var(--brand-primary);
+}
+
+.sds-pill--teal-light {
+  background: rgba(0, 140, 179, 0.07);
+  color: var(--brand-primary);
+}
+
+/* ── Action buttons ── */
+.sds-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.sds-btn-suggest {
+  flex: 1;
+  height: 56px;
+  border-radius: var(--radius-pill);
+  background: #fff;
+  border: 1.5px solid #000;
+  color: #000;
+  font-size: 16px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+}
+
+/* ── Community card ── */
+.sds-community {
+  background: var(--surface-fill-4);
+  border-radius: var(--radius-card);
+  padding: 20px;
+  margin-top: 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.sds-community__title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-100);
+  margin: 0;
+}
+
+.sds-community__body {
+  font-size: 14px;
+  color: var(--text-72);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ══════════════════════════════════════════════════════════
    Slice 6 — Shared sheet utilities + MenuDrawer + QiblaSheet + FeedbackSheet
    ══════════════════════════════════════════════════════════ */
 

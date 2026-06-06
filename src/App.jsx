@@ -6,6 +6,7 @@ import PrayerTimesSheet from './components/PrayerTimesSheet';
 import DownloadAppSheet from './components/DownloadAppSheet';
 import BottomPanel from './components/BottomPanel';
 import MenuDrawer from './components/MenuDrawer';
+import SurauDetailSheet from './components/SurauDetailSheet';
 import useLocation from './hooks/useLocation';
 import usePrayerTimes from './hooks/usePrayerTimes';
 import useSuraus from './hooks/useSuraus';
@@ -31,6 +32,7 @@ export default function App() {
   }, [loc.location, loc.isLocating]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── UI state ─────────────────────────────────────────────────────
+  const [selectedSurau,    setSelectedSurau]    = useState(null);
   const [searchQuery,      setSearchQuery]      = useState('');
   const [menuOpen,         setMenuOpen]         = useState(false);
   const [prayerSheetOpen,  setPrayerSheetOpen]  = useState(false);
@@ -41,7 +43,7 @@ export default function App() {
   const handleLocateMe     = useCallback(() => loc.requestLocation(), [loc]);
   const handleLongPressMap = useCallback(() => promptDownload(), [promptDownload]);
   const handleSelectSurau  = useCallback((surau) => {
-    console.warn('[App] pin/card tap → SurauDetailSheet (Slice 7)', surau.name);
+    setSelectedSurau(surau);
   }, []);
 
   // ── Splash ───────────────────────────────────────────────────────
@@ -105,6 +107,13 @@ export default function App() {
       />
 
       {/* ── Sheets ── */}
+      <SurauDetailSheet
+        open={!!selectedSurau}
+        surau={selectedSurau}
+        onClose={() => setSelectedSurau(null)}
+        onPromptDownload={promptDownload}
+      />
+
       <MenuDrawer
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
