@@ -1,11 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import MapView from './components/MapView';
-import SearchPanel from './components/SearchPanel';
-import ZoneSelector from './components/ZoneSelector';
 import Hero from './components/Hero';
 import PrayerPill from './components/PrayerPill';
 import PrayerTimesSheet from './components/PrayerTimesSheet';
 import DownloadAppSheet from './components/DownloadAppSheet';
+import BottomPanel from './components/BottomPanel';
 import useLocation from './hooks/useLocation';
 import usePrayerTimes from './hooks/usePrayerTimes';
 import useSuraus from './hooks/useSuraus';
@@ -18,12 +17,10 @@ export default function App() {
   const prayer = usePrayerTimes();
   const suraus = useSuraus();
 
-  // Fetch prayer times when zone resolves
   useEffect(() => {
     if (loc.zoneCode) prayer.fetch(loc.zoneCode);
   }, [loc.zoneCode]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Load suraus when location resolves or falls back to default
   useEffect(() => {
     if (loc.location) {
       suraus.refresh(loc.location.lat, loc.location.lng);
@@ -32,41 +29,18 @@ export default function App() {
     }
   }, [loc.location, loc.isLocating]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Legacy UI state (SearchPanel / ZoneSelector — rebuilt in Slice 4) ──
-  const [selectedSurau,    setSelectedSurau]    = useState(null);
+  // ── UI state ─────────────────────────────────────────────────────
   const [searchQuery,      setSearchQuery]      = useState('');
-  const [filterType,       setFilterType]       = useState('all');
-  const [showZoneSelector, setShowZoneSelector] = useState(false);
   const [prayerSheetOpen,  setPrayerSheetOpen]  = useState(false);
   const [downloadSheetOpen, setDownloadSheetOpen] = useState(false);
   const promptDownload = useCallback(() => setDownloadSheetOpen(true), []);
 
-  // Derive mapCenter + userLocation from the location hook
-  const mapCenter = loc.location
-    ? { lat: loc.location.lat, lon: loc.location.lng }
-    : DEFAULT_LOCATION;
-
-  const userLocation = loc.location
-    ? { lat: loc.location.lat, lon: loc.location.lng }
-    : null;
-
   // ── Handlers ─────────────────────────────────────────────────────
-  const handleLocateMe = useCallback(() => {
-    loc.requestLocation();
-  }, [loc]);
-
-  const handleZoneChange = useCallback((newZone) => {
-    prayer.fetch(newZone);
-  }, [prayer]);
-
-  const handleSelectSurau = useCallback((surau) => {
-    console.warn('[App] pin tap → SurauDetailSheet (Slice 7)', surau.name);
-    setSelectedSurau(surau);
+  const handleLocateMe     = useCallback(() => loc.requestLocation(), [loc]);
+  const handleLongPressMap = useCallback(() => promptDownload(), [promptDownload]);
+  const handleSelectSurau  = useCallback((surau) => {
+    console.warn('[App] pin/card tap → SurauDetailSheet (Slice 7)', surau.name);
   }, []);
-
-  const handleLongPressMap = useCallback(() => {
-    promptDownload();
-  }, [promptDownload]);
 
   // ── Splash ───────────────────────────────────────────────────────
   if (!loc.locationName) {
@@ -102,11 +76,15 @@ export default function App() {
         onOpenPrayerSheet={() => setPrayerSheetOpen(true)}
       />
 
-      {/* ── Map ── */}
+      {/* ── Map (fills remaining space, panels overlay it) ── */}
       <div className="app__map">
         <MapView
-          center={mapCenter}
-          userLocation={userLocation}
+          center={loc.location
+            ? { lat: loc.location.lat, lon: loc.location.lng }
+            : DEFAULT_LOCATION}
+          userLocation={loc.location
+            ? { lat: loc.location.lat, lon: loc.location.lng }
+            : null}
           suraus={suraus.suraus}
           onSelectSurau={handleSelectSurau}
           onLongPressMap={handleLongPressMap}
@@ -114,42 +92,22 @@ export default function App() {
         />
       </div>
 
-      {/* ── Surau error banner ── */}
-      {suraus.error && (
-        <div className="error-banner">
-          ⚠️ {suraus.error}
-        </div>
-      )}
-
-      {/* ── Bottom search panel (legacy, rebuilt in Slice 4) ── */}
-      <SearchPanel
-        surauList={suraus.suraus}
-        userLocation={userLocation}
+      {/* ── Bottom panel: search + surau cards ── */}
+      <BottomPanel
+        suraus={suraus.suraus}
+        userLocation={loc.location}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        filterType={filterType}
-        onFilterChange={setFilterType}
-        selectedSurau={selectedSurau}
-        onSurauSelect={handleSelectSurau}
+        onSelectSurau={handleSelectSurau}
         loading={suraus.isLoadingSuraus}
       />
 
-      {/* ── Zone selector (legacy) ── */}
-      {showZoneSelector && (
-        <ZoneSelector
-          currentZone={loc.zoneCode}
-          onSelect={handleZoneChange}
-          onClose={() => setShowZoneSelector(false)}
-        />
-      )}
-
-      {/* ── Download app sheet (long-press / write-intent actions) ── */}
+      {/* ── Sheets ── */}
       <DownloadAppSheet
         open={downloadSheetOpen}
         onClose={() => setDownloadSheetOpen(false)}
       />
 
-      {/* ── Prayer times sheet ── */}
       <PrayerTimesSheet
         open={prayerSheetOpen}
         onClose={() => setPrayerSheetOpen(false)}

@@ -23,6 +23,7 @@
 
 /* ── Brand tokens ── */
 :root {
+  --bottom-panel-h: 186px; /* SearchBar 48 + gap 12 + cards 110 + padding 16+16 = 202; actual ~186 */
   /* Brand */
   --brand-primary:    #008CB3;
   --brand-on-primary: #FFFFFF;
@@ -491,7 +492,7 @@ body {
 /* ── iOS-style controls — bottom-right stack ── */
 .map-controls {
   position: absolute;
-  bottom: calc(var(--panel-peek) + 16px);
+  bottom: calc(var(--bottom-panel-h) + 16px);
   right: 12px;
   display: flex;
   flex-direction: column;
@@ -548,7 +549,7 @@ body {
 /* ── OSM attribution — bottom-left ── */
 .map-osm-attr {
   position: absolute;
-  bottom: calc(var(--panel-peek) + 6px);
+  bottom: calc(var(--bottom-panel-h) + 6px);
   left: 8px;
   font-size: 11px;
   color: rgba(0, 0, 0, 0.55);
@@ -1259,6 +1260,181 @@ body {
   color: var(--text-24);
   text-align: center;
 }
+
+/* ══════════════════════════════════════════════════════════
+   Slice 4 — SearchBar + SurauCards + BottomPanel
+   ══════════════════════════════════════════════════════════ */
+
+/* ── BottomPanel ── */
+.bp-panel {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.10);
+  padding: 16px 12px calc(16px + env(safe-area-inset-bottom, 0px));
+  /* Leaflet marker pane sits at z-index 600; we must exceed it */
+  z-index: 800;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ── SearchBar ── */
+.sb-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.sb-icon {
+  position: absolute;
+  left: 14px;
+  color: var(--text-48);
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+}
+
+.sb-input {
+  width: 100%;
+  height: 48px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-fill-4);
+  border: none;
+  outline: none;
+  padding: 0 40px 0 42px;
+  font-size: 16px;
+  font-weight: 400;
+  font-family: inherit;
+  color: var(--text-100);
+  /* Remove browser default search input decoration */
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.sb-input::placeholder {
+  color: var(--text-24);
+}
+
+/* Suppress built-in X on webkit search inputs */
+.sb-input::-webkit-search-cancel-button { display: none; }
+
+.sb-clear {
+  position: absolute;
+  right: 14px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-48);
+  padding: 4px;
+  line-height: 1;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── SurauCards horizontal scroll ── */
+.sc-scroll {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  overflow-x: auto;
+  overflow-y: visible;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 2px; /* preserve box-shadow bottom */
+}
+.sc-scroll::-webkit-scrollbar { display: none; }
+
+.sc-card {
+  width: 170px;
+  min-width: 170px;
+  height: 110px;
+  background: #fff;
+  border-radius: var(--radius-card);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+  transition: box-shadow 0.15s;
+}
+
+.sc-card:active {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.sc-card--skeleton,
+.sc-card--empty {
+  pointer-events: none;
+  cursor: default;
+}
+
+.sc-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-100);
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex: 1;
+  margin: 0;
+}
+
+.sc-dist {
+  font-size: 12px;
+  color: var(--text-72);
+  margin: 4px 0 0;
+}
+
+.sc-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.sc-badge {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--brand-primary);
+  background: rgba(0, 140, 179, 0.10);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.sc-view {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--brand-primary);
+}
+
+.sc-empty-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-72);
+  margin: 0 0 4px;
+}
+
+.sc-empty-hint {
+  font-size: 12px;
+  color: var(--text-48);
+  margin: 0;
+}
+
+/* Skeleton blocks */
+.sc-sk { display: block; border-radius: 4px; }
+.sc-sk--title { height: 14px; width: 100%; margin-bottom: 8px; }
+.sc-sk--dist  { height: 12px; width: 50px;  margin-bottom: 0; }
+.sc-sk--row   { height: 20px; width: 100%;  margin-top: 8px;  }
 
 /* ══════════════════════════════════════════════════════════
    Slice 3.1 — DownloadAppSheet
