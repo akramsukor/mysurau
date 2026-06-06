@@ -5,6 +5,7 @@ import PrayerPill from './components/PrayerPill';
 import PrayerTimesSheet from './components/PrayerTimesSheet';
 import DownloadAppSheet from './components/DownloadAppSheet';
 import BottomPanel from './components/BottomPanel';
+import MenuDrawer from './components/MenuDrawer';
 import useLocation from './hooks/useLocation';
 import usePrayerTimes from './hooks/usePrayerTimes';
 import useSuraus from './hooks/useSuraus';
@@ -31,6 +32,7 @@ export default function App() {
 
   // ── UI state ─────────────────────────────────────────────────────
   const [searchQuery,      setSearchQuery]      = useState('');
+  const [menuOpen,         setMenuOpen]         = useState(false);
   const [prayerSheetOpen,  setPrayerSheetOpen]  = useState(false);
   const [downloadSheetOpen, setDownloadSheetOpen] = useState(false);
   const promptDownload = useCallback(() => setDownloadSheetOpen(true), []);
@@ -63,7 +65,7 @@ export default function App() {
         locationName={loc.locationName}
         hijriDate={prayer.hijriDate}
         onRefresh={handleLocateMe}
-        onOpenMenu={() => console.warn('[App] Menu drawer — Slice 6')}
+        onOpenMenu={() => setMenuOpen(true)}
       />
 
       {/* ── Prayer pill ── */}
@@ -103,6 +105,12 @@ export default function App() {
       />
 
       {/* ── Sheets ── */}
+      <MenuDrawer
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        onPromptDownload={promptDownload}
+      />
+
       <DownloadAppSheet
         open={downloadSheetOpen}
         onClose={() => setDownloadSheetOpen(false)}
