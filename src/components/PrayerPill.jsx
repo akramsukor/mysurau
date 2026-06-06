@@ -34,12 +34,12 @@ export default function PrayerPill({
       ) : (
         <button className="pp-card" onClick={onOpenPrayerSheet}>
           <div className="pp-col">
-            <span className="pp-label">Sekarang: {currentPrayerName}</span>
+            <span className="pp-label">Now: {currentPrayerName}</span>
             <span className="pp-time">{fmt12h(currentPrayerTime)}</span>
           </div>
           <div className="pp-divider" />
           <div className="pp-col pp-col--right">
-            <span className="pp-label">{nextPrayerName} pada {fmt12h(nextPrayerTime)}</span>
+            <span className="pp-label">{nextPrayerName} at {fmt12h(nextPrayerTime)}</span>
             <span className="pp-time">{countdown}</span>
           </div>
         </button>

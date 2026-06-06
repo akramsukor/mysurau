@@ -53,24 +53,24 @@ export default function PrayerTimesSheet({
 
         {/* ── Header ── */}
         <div className="pts-header">
-          <span className="pts-title">Waktu Solat</span>
-          <button className="pts-close-btn" onClick={onClose} aria-label="Tutup">✕</button>
+          <span className="pts-title">Prayer times</span>
+          <button className="pts-close-btn" onClick={onClose} aria-label="Close">✕</button>
         </div>
 
         {/* ── Date navigation ── */}
         <div className="pts-date-nav">
-          <button className="pts-chevron" onClick={() => navigate(-1)} aria-label="Hari sebelum">‹</button>
+          <button className="pts-chevron" onClick={() => navigate(-1)} aria-label="Previous day">‹</button>
           <div className="pts-date-center">
             <div className="pts-date-greg">{fmtDate(dateObj)}</div>
             {sheetHijri && <div className="pts-date-hijri">{sheetHijri}</div>}
           </div>
-          <button className="pts-chevron" onClick={() => navigate(1)} aria-label="Hari berikut">›</button>
+          <button className="pts-chevron" onClick={() => navigate(1)} aria-label="Next day">›</button>
         </div>
 
         {/* ── Prayer rows ── */}
         <div className="pts-rows">
           {isLoadingSheet ? (
-            <div className="pts-loading">Memuatkan…</div>
+            <div className="pts-loading">Loading…</div>
           ) : (
             PRAYER_KEYS.map((key, i) => (
               <div
@@ -86,7 +86,7 @@ export default function PrayerTimesSheet({
           )}
         </div>
 
-        <div className="pts-attribution">Sumber: JAKIM e-Solat</div>
+        <div className="pts-attribution">Source: JAKIM e-Solat</div>
       </div>
     </BottomSheet>
   );

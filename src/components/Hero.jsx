@@ -30,7 +30,7 @@ export default function Hero({ locationName, hijriDate, onRefresh, onOpenMenu })
                 <button
                   className="hero__refresh-btn"
                   onClick={onRefresh}
-                  aria-label="Muat semula lokasi"
+                  aria-label="Refresh location"
                 >
                   ↻
                 </button>
@@ -46,7 +46,7 @@ export default function Hero({ locationName, hijriDate, onRefresh, onOpenMenu })
         <button
           className="hero__menu-btn"
           onClick={onOpenMenu}
-          aria-label="Buka menu"
+          aria-label="Open menu"
         >
           ≡
         </button>
