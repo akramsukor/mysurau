@@ -1260,6 +1260,47 @@ body {
   text-align: center;
 }
 
+/* ══════════════════════════════════════════════════════════
+   Slice 3.1 — DownloadAppSheet
+   ══════════════════════════════════════════════════════════ */
+
+.das-container {
+  padding: 24px 24px 32px;
+}
+
+.das-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.das-title {
+  flex: 1;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-100);
+  line-height: 1.3;
+}
+
+.das-close-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--surface-fill-8);
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.das-gap { height: 20px; }
+
 /* ─────────────────── Animations ─────────────────── */
 @keyframes spin {
   to { transform: rotate(360deg); }

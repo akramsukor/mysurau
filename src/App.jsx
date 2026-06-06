@@ -5,6 +5,7 @@ import ZoneSelector from './components/ZoneSelector';
 import Hero from './components/Hero';
 import PrayerPill from './components/PrayerPill';
 import PrayerTimesSheet from './components/PrayerTimesSheet';
+import DownloadAppSheet from './components/DownloadAppSheet';
 import useLocation from './hooks/useLocation';
 import usePrayerTimes from './hooks/usePrayerTimes';
 import useSuraus from './hooks/useSuraus';
@@ -37,6 +38,8 @@ export default function App() {
   const [filterType,       setFilterType]       = useState('all');
   const [showZoneSelector, setShowZoneSelector] = useState(false);
   const [prayerSheetOpen,  setPrayerSheetOpen]  = useState(false);
+  const [downloadSheetOpen, setDownloadSheetOpen] = useState(false);
+  const promptDownload = useCallback(() => setDownloadSheetOpen(true), []);
 
   // Derive mapCenter + userLocation from the location hook
   const mapCenter = loc.location
@@ -61,9 +64,9 @@ export default function App() {
     setSelectedSurau(surau);
   }, []);
 
-  const handleLongPressMap = useCallback((latlng) => {
-    console.warn('[App] long-press → Add surau here (Slice 8)', latlng);
-  }, []);
+  const handleLongPressMap = useCallback(() => {
+    promptDownload();
+  }, [promptDownload]);
 
   // ── Splash ───────────────────────────────────────────────────────
   if (!loc.locationName) {
@@ -139,6 +142,12 @@ export default function App() {
           onClose={() => setShowZoneSelector(false)}
         />
       )}
+
+      {/* ── Download app sheet (long-press / write-intent actions) ── */}
+      <DownloadAppSheet
+        open={downloadSheetOpen}
+        onClose={() => setDownloadSheetOpen(false)}
+      />
 
       {/* ── Prayer times sheet ── */}
       <PrayerTimesSheet
