@@ -4,16 +4,6 @@ import Toggle from './ui/Toggle';
 import QiblaSheet from './QiblaSheet';
 import FeedbackSheet from './FeedbackSheet';
 
-const LS_KEY = 'prayer_alert_enabled';
-
-function loadAlertPref() {
-  try { return localStorage.getItem(LS_KEY) !== 'false'; } catch { return true; }
-}
-
-function saveAlertPref(val) {
-  try { localStorage.setItem(LS_KEY, String(val)); } catch { /* ignore */ }
-}
-
 function MenuRow({ emoji, label, onTap, right }) {
   return (
     <button className="md-row" onClick={onTap}>
@@ -28,44 +18,42 @@ function Divider() {
   return <div className="md-divider" />;
 }
 
-export default function MenuDrawer({ open, onClose, onPromptDownload }) {
-  const [alertOn,       setAlertOn]       = useState(loadAlertPref);
-  const [notifBlocked,  setNotifBlocked]  = useState(false);
-  const [qiblaOpen,     setQiblaOpen]     = useState(false);
-  const [feedbackOpen,  setFeedbackOpen]  = useState(false);
+/**
+ * alertOn and onAlertChange are lifted to App so usePrayerNotifications
+ * can read the same value. MenuDrawer still owns the permission UX
+ * (Notification.requestPermission call + blocked hint).
+ */
+export default function MenuDrawer({ open, onClose, onPromptDownload, alertOn, onAlertChange }) {
+  const [notifBlocked, setNotifBlocked] = useState(false);
+  const [qiblaOpen,    setQiblaOpen]    = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
-  // Sync toggle with actual browser permission on open
+  // Sync with actual browser permission when drawer opens
   useEffect(() => {
     if (!open) return;
     if (typeof Notification !== 'undefined' && Notification.permission === 'denied') {
-      setAlertOn(false);
-      saveAlertPref(false);
+      onAlertChange(false);
     }
-  }, [open]);
+  }, [open, onAlertChange]);
 
   const handleAlertToggle = async (next) => {
     if (next) {
-      // Turning ON → request permission
       if (typeof Notification === 'undefined') {
-        setAlertOn(false);
         setNotifBlocked(true);
+        onAlertChange(false);
         return;
       }
       const result = await Notification.requestPermission();
       if (result === 'granted') {
-        setAlertOn(true);
         setNotifBlocked(false);
-        saveAlertPref(true);
+        onAlertChange(true);
       } else {
-        setAlertOn(false);
         setNotifBlocked(true);
-        saveAlertPref(false);
+        onAlertChange(false);
       }
     } else {
-      // Turning OFF
-      setAlertOn(false);
       setNotifBlocked(false);
-      saveAlertPref(false);
+      onAlertChange(false);
     }
   };
 
@@ -97,26 +85,31 @@ export default function MenuDrawer({ open, onClose, onPromptDownload }) {
                 <Toggle on={alertOn} onChange={handleAlertToggle} />
               </span>
             </div>
+
+            {/* Permission-denied hint (Slice 6) */}
             {notifBlocked && (
               <p className="md-notif-hint">
                 Notifications are blocked. Enable them in your browser settings.
+              </p>
+            )}
+
+            {/* Foreground-only caveat (Slice 8) — visible when toggle is ON */}
+            {alertOn && !notifBlocked && (
+              <p className="md-notif-subrow">
+                Notifications fire while this tab is open. For background alerts,{' '}
+                <button className="md-notif-ios-link" onClick={onPromptDownload}>
+                  get the iOS app
+                </button>
+                .
               </p>
             )}
           </div>
 
           {/* ── Section 3: Tools ── */}
           <div className="md-card">
-            <MenuRow
-              emoji="🕋"
-              label="Qibla Finder"
-              onTap={() => setQiblaOpen(true)}
-            />
+            <MenuRow emoji="🕋" label="Qibla Finder" onTap={() => setQiblaOpen(true)} />
             <Divider />
-            <MenuRow
-              emoji="✍🏻"
-              label="Feedback"
-              onTap={() => setFeedbackOpen(true)}
-            />
+            <MenuRow emoji="✍🏻" label="Feedback" onTap={() => setFeedbackOpen(true)} />
           </div>
 
           {/* ── Footer ── */}
@@ -124,7 +117,6 @@ export default function MenuDrawer({ open, onClose, onPromptDownload }) {
         </div>
       </BottomSheet>
 
-      {/* Nested sheets — rendered outside the drawer BottomSheet to avoid z-index conflict */}
       <QiblaSheet    open={qiblaOpen}    onClose={() => setQiblaOpen(false)} />
       <FeedbackSheet open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
     </>

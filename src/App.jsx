@@ -10,6 +10,7 @@ import SurauDetailSheet from './components/SurauDetailSheet';
 import useLocation from './hooks/useLocation';
 import usePrayerTimes from './hooks/usePrayerTimes';
 import useSuraus from './hooks/useSuraus';
+import usePrayerNotifications from './hooks/usePrayerNotifications';
 
 const DEFAULT_LOCATION = { lat: 3.139, lon: 101.6869 };
 
@@ -32,6 +33,25 @@ export default function App() {
   }, [loc.location, loc.isLocating]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── UI state ─────────────────────────────────────────────────────
+  // Lifted from MenuDrawer so usePrayerNotifications can read the same value.
+  // Default false on web — honest: we don't request notification permission unprompted.
+  const [prayerAlertEnabled, setPrayerAlertEnabled] = useState(() => {
+    try { return localStorage.getItem('prayer_alert_enabled') === 'true'; }
+    catch { return false; }
+  });
+
+  const handleAlertChange = useCallback((val) => {
+    setPrayerAlertEnabled(val);
+    try { localStorage.setItem('prayer_alert_enabled', String(val)); }
+    catch {}
+  }, []);
+
+  usePrayerNotifications({
+    enabled:           prayerAlertEnabled,
+    cachedPrayerTimes: prayer.cachedPrayerTimes,
+    locationName:      loc.locationName,
+  });
+
   const [selectedSurau,    setSelectedSurau]    = useState(null);
   const [searchQuery,      setSearchQuery]      = useState('');
   const [menuOpen,         setMenuOpen]         = useState(false);
@@ -118,6 +138,8 @@ export default function App() {
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
         onPromptDownload={promptDownload}
+        alertOn={prayerAlertEnabled}
+        onAlertChange={handleAlertChange}
       />
 
       <DownloadAppSheet

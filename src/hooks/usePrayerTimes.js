@@ -151,9 +151,16 @@ export default function usePrayerTimes() {
     const key = `${year}-${String(month).padStart(2, '0')}`;
     if (monthCache.current[key]) return monthCache.current[key];
     const rows = await fetchMonthData(zoneCode, year, month);
-    monthCache.current[key] = rows;
+    // Stamp each row with an unambiguous ISO date so notification scheduler
+    // can construct absolute KL-timezone fire times without parsing API formats.
+    const mm = String(month).padStart(2, '0');
+    const datedRows = rows.map((row, i) => ({
+      ...row,
+      isoDate: `${year}-${mm}-${String(i + 1).padStart(2, '0')}`,
+    }));
+    monthCache.current[key] = datedRows;
     refreshCache();
-    return rows;
+    return datedRows;
   }, [refreshCache]);
 
   // Compute and push current/next prayer + countdown from a prayer row
