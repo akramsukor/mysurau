@@ -1,159 +1,79 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import MapView from './components/MapView';
-import PrayerTimeBar from './components/PrayerTimeBar';
-import SearchPanel from './components/SearchPanel';
-import ZoneSelector from './components/ZoneSelector';
-import { fetchNearbySurau } from './utils/overpassApi';
-import { fetchPrayerTimes } from './utils/prayerApi';
-import { reverseGeocode } from './utils/zoneDetection';
+import Hero from './components/Hero';
+import PrayerPill from './components/PrayerPill';
+import PrayerTimesSheet from './components/PrayerTimesSheet';
+import DownloadAppSheet from './components/DownloadAppSheet';
+import BottomPanel from './components/BottomPanel';
+import MenuDrawer from './components/MenuDrawer';
+import SurauDetailSheet from './components/SurauDetailSheet';
+import useLocation from './hooks/useLocation';
+import usePrayerTimes from './hooks/usePrayerTimes';
+import useSuraus from './hooks/useSuraus';
+import usePrayerNotifications from './hooks/usePrayerNotifications';
 
-const DEFAULT_LOCATION = { lat: 3.139, lon: 101.6869 }; // Kuala Lumpur
+const DEFAULT_LOCATION = { lat: 3.139, lon: 101.6869 };
 
 export default function App() {
-  const [userLocation, setUserLocation] = useState(null);
-  const [mapCenter, setMapCenter] = useState(DEFAULT_LOCATION);
-  const [locationName, setLocationName] = useState('Mencari lokasi…');
-  const [zone, setZone] = useState('WLY01');
-  const [zoneName, setZoneName] = useState('Kuala Lumpur');
+  // ── Hooks ────────────────────────────────────────────────────────
+  const loc    = useLocation();
+  const prayer = usePrayerTimes();
+  const suraus = useSuraus();
 
-  const [prayerTimes, setPrayerTimes] = useState(null);
-  const [surauList, setSurauList] = useState([]);
-
-  const [loadingLocation, setLoadingLocation] = useState(true);
-  const [loadingSurau, setLoadingSurau] = useState(false);
-  const [locationError, setLocationError] = useState(null); // 'denied' | 'unavailable' | 'timeout' | null
-
-  const [selectedSurau, setSelectedSurau] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterType, setFilterType] = useState('all');
-  const [showZoneSelector, setShowZoneSelector] = useState(false);
-  const [error, setError] = useState(null);
-
-  const surauFetchRef = useRef(null);
-
-  /* ─── Load prayer times ─── */
-  const loadPrayerTimes = useCallback(async (zoneCode) => {
-    try {
-      const times = await fetchPrayerTimes(zoneCode);
-      setPrayerTimes(times);
-    } catch (err) {
-      console.error('Prayer times error:', err);
-    }
-  }, []);
-
-  /* ─── Load nearby surau ─── */
-  const loadSurau = useCallback(async (lat, lon, attempt = 1) => {
-    // Cancel any previous fetch
-    if (surauFetchRef.current) surauFetchRef.current = false;
-    const token = {};
-    surauFetchRef.current = token;
-
-    setLoadingSurau(true);
-    setError(null);
-
-    try {
-      const results = await fetchNearbySurau(lat, lon, 5000);
-      if (surauFetchRef.current === token) {
-        setSurauList(results);
-        setLoadingSurau(false);
-      }
-    } catch (err) {
-      console.error(`Surau fetch error (attempt ${attempt}):`, err);
-      if (surauFetchRef.current === token) {
-        if (attempt < 3) {
-          setTimeout(() => loadSurau(lat, lon, attempt + 1), attempt * 3000);
-        } else {
-          setLoadingSurau(false);
-          setError('Gagal memuatkan surau. Server mungkin sibuk — cuba lagi.');
-        }
-      }
-    }
-  }, []);
-
-  /* ─── Init: detect location ─── */
   useEffect(() => {
-    if (!navigator.geolocation) {
-      setLocationName('Kuala Lumpur');
-      setLoadingLocation(false);
-      loadSurau(DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lon);
-      loadPrayerTimes('WLY01');
-      return;
+    if (loc.zoneCode) prayer.fetch(loc.zoneCode);
+  }, [loc.zoneCode]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (loc.location) {
+      suraus.refresh(loc.location.lat, loc.location.lng);
+    } else if (!loc.isLocating) {
+      suraus.refresh(DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lon);
     }
+  }, [loc.location, loc.isLocating]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const coords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
-        setUserLocation(coords);
-        setMapCenter(coords);
-        setLoadingLocation(false);
+  // ── UI state ─────────────────────────────────────────────────────
+  // Lifted from MenuDrawer so usePrayerNotifications can read the same value.
+  // Default false on web — honest: we don't request notification permission unprompted.
+  const [prayerAlertEnabled, setPrayerAlertEnabled] = useState(() => {
+    try { return localStorage.getItem('prayer_alert_enabled') === 'true'; }
+    catch { return false; }
+  });
 
-        // Reverse geocode → zone
-        const geo = await reverseGeocode(coords.lat, coords.lon);
-        if (geo) {
-          setLocationName(geo.displayName);
-          setZone(geo.zone);
-          setZoneName(geo.zoneName);
-          loadPrayerTimes(geo.zone);
-        } else {
-          loadPrayerTimes('WLY01');
-        }
+  const handleAlertChange = useCallback((val) => {
+    setPrayerAlertEnabled(val);
+    try { localStorage.setItem('prayer_alert_enabled', String(val)); }
+    catch {}
+  }, []);
 
-        loadSurau(coords.lat, coords.lon);
-      },
-      (err) => {
-        console.warn('Geolocation error:', err.code, err.message);
-        if (err.code === 1) setLocationError('denied');
-        else if (err.code === 2) setLocationError('unavailable');
-        else setLocationError('timeout');
-        setLocationName('Kuala Lumpur');
-        setLoadingLocation(false);
-        loadSurau(DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lon);
-        loadPrayerTimes('WLY01');
-      },
-      { enableHighAccuracy: true, timeout: 20000, maximumAge: 60000 }
-    );
-  }, [loadSurau, loadPrayerTimes]);
+  usePrayerNotifications({
+    enabled:           prayerAlertEnabled,
+    cachedPrayerTimes: prayer.cachedPrayerTimes,
+    locationName:      loc.locationName,
+  });
 
-  /* ─── Handlers ─── */
-  const handleLocateMe = () => {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const coords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
-        setUserLocation(coords);
-        setMapCenter({ ...coords, _ts: Date.now() }); // force recenter
-        setLocationError(null);
-        loadSurau(coords.lat, coords.lon);
-      },
-      (err) => {
-        if (err.code === 1) setLocationError('denied');
-        else if (err.code === 2) setLocationError('unavailable');
-        else setLocationError('timeout');
-      },
-      { enableHighAccuracy: true, timeout: 12000 }
-    );
-  };
+  const [selectedSurau,    setSelectedSurau]    = useState(null);
+  const [searchQuery,      setSearchQuery]      = useState('');
+  const [menuOpen,         setMenuOpen]         = useState(false);
+  const [prayerSheetOpen,  setPrayerSheetOpen]  = useState(false);
+  const [downloadSheetOpen, setDownloadSheetOpen] = useState(false);
+  const promptDownload = useCallback(() => setDownloadSheetOpen(true), []);
 
-  const handleRefresh = () => {
-    const loc = userLocation || DEFAULT_LOCATION;
-    loadSurau(loc.lat, loc.lon);
-    loadPrayerTimes(zone);
-  };
+  // ── Handlers ─────────────────────────────────────────────────────
+  const handleLocateMe     = useCallback(() => loc.requestLocation(), [loc]);
+  const handleLongPressMap = useCallback(() => promptDownload(), [promptDownload]);
+  const handleSelectSurau  = useCallback((surau) => {
+    setSelectedSurau(surau);
+  }, []);
 
-  const handleZoneChange = (newZone, newZoneName) => {
-    setZone(newZone);
-    setZoneName(newZoneName);
-    loadPrayerTimes(newZone);
-  };
-
-  /* ─── Loading splash ─── */
-  if (loadingLocation) {
+  // ── Splash ───────────────────────────────────────────────────────
+  if (!loc.locationName) {
     return (
       <div className="splash">
         <div className="splash__content">
           <div className="splash__icon">🕌</div>
           <h1 className="splash__title">MySurau</h1>
-          <p className="splash__subtitle">Mencari lokasi dan surau berdekatan…</p>
+          <p className="splash__subtitle">Finding your location…</p>
           <div className="splash__spinner" />
         </div>
       </div>
@@ -162,71 +82,80 @@ export default function App() {
 
   return (
     <div className="app">
-      {/* Header: prayer times */}
-      <PrayerTimeBar
-        prayerTimes={prayerTimes}
-        locationName={locationName}
-        zone={zoneName || zone}
-        zoneCode={zone}
-        onZoneClick={() => setShowZoneSelector(true)}
+      {/* ── Teal hero ── */}
+      <Hero
+        locationName={loc.locationName}
+        hijriDate={prayer.hijriDate}
+        onRefresh={handleLocateMe}
+        onOpenMenu={() => setMenuOpen(true)}
       />
 
-      {/* Map */}
+      {/* ── Prayer pill ── */}
+      <PrayerPill
+        currentPrayerName={prayer.currentPrayerName}
+        currentPrayerTime={prayer.currentPrayerTime}
+        nextPrayerName={prayer.nextPrayerName}
+        nextPrayerTime={prayer.nextPrayerTime}
+        countdown={prayer.countdown}
+        onOpenPrayerSheet={() => setPrayerSheetOpen(true)}
+      />
+
+      {/* ── Map (fills remaining space, panels overlay it) ── */}
       <div className="app__map">
         <MapView
-          center={mapCenter}
-          userLocation={userLocation}
-          surauList={surauList}
-          selectedSurau={selectedSurau}
-          onSurauSelect={setSelectedSurau}
-          onRefresh={handleRefresh}
+          center={loc.location
+            ? { lat: loc.location.lat, lon: loc.location.lng }
+            : DEFAULT_LOCATION}
+          userLocation={loc.location
+            ? { lat: loc.location.lat, lon: loc.location.lng }
+            : null}
+          suraus={suraus.suraus}
+          onSelectSurau={handleSelectSurau}
+          onLongPressMap={handleLongPressMap}
           onLocateMe={handleLocateMe}
         />
       </div>
 
-      {/* Location permission banner */}
-      {locationError && (
-        <div className="location-banner">
-          <span>
-            {locationError === 'denied'
-              ? 'Akses lokasi ditolak. Benarkan akses lokasi dalam tetapan pelayar anda, kemudian tekan 📍.'
-              : locationError === 'unavailable'
-              ? 'Lokasi tidak dapat dikesan. Menunjukkan Kuala Lumpur sebagai lalai.'
-              : 'Masa mencari lokasi tamat. Tekan 📍 untuk cuba semula.'}
-          </span>
-          <button className="error-banner__close" onClick={() => setLocationError(null)}>✕</button>
-        </div>
-      )}
-
-      {/* Error banner */}
-      {error && (
-        <div className="error-banner">
-          ⚠️ {error}
-          <button className="error-banner__close" onClick={() => setError(null)}>✕</button>
-        </div>
-      )}
-
-      {/* Bottom search panel */}
-      <SearchPanel
-        surauList={surauList}
-        userLocation={userLocation}
+      {/* ── Bottom panel: search + surau cards ── */}
+      <BottomPanel
+        suraus={suraus.suraus}
+        userLocation={loc.location}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        filterType={filterType}
-        onFilterChange={setFilterType}
-        selectedSurau={selectedSurau}
-        onSurauSelect={setSelectedSurau}
-        loading={loadingSurau}
+        onSelectSurau={handleSelectSurau}
+        loading={suraus.isLoadingSuraus}
       />
 
-      {/* Zone selector modal */}
-      {showZoneSelector && (
-        <ZoneSelector
-          currentZone={zone}
-          onSelect={handleZoneChange}
-          onClose={() => setShowZoneSelector(false)}
-        />
-      )}
+      {/* ── Sheets ── */}
+      <SurauDetailSheet
+        open={!!selectedSurau}
+        surau={selectedSurau}
+        onClose={() => setSelectedSurau(null)}
+        onPromptDownload={promptDownload}
+      />
+
+      <MenuDrawer
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        onPromptDownload={promptDownload}
+        alertOn={prayerAlertEnabled}
+        onAlertChange={handleAlertChange}
+      />
+
+      <DownloadAppSheet
+        open={downloadSheetOpen}
+        onClose={() => setDownloadSheetOpen(false)}
+      />
+
+      <PrayerTimesSheet
+        open={prayerSheetOpen}
+        onClose={() => setPrayerSheetOpen(false)}
+        sheetPrayerTime={prayer.sheetPrayerTime}
+        sheetHijri={prayer.sheetHijri}
+        currentPrayerIndex={prayer.currentPrayerIndex}
+        isLoadingSheet={prayer.isLoadingSheet}
+        fetchForDate={prayer.fetchForDate}
+      />
     </div>
   );
 }
