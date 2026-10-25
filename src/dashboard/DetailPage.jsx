@@ -78,7 +78,7 @@ function CompareRow({ label, surauVal, pendingVal }) {
   );
 }
 
-const TILE_URL = 'https://cartodb-basemaps-a.global.ssl.fastly.net/light_all/{z}/{x}/{y}@2x.png';
+const TILE_URL = 'https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png';
 const RED_MARKER  = { color: '#B71C1C', fillColor: '#EF5350', fillOpacity: 0.9, weight: 2 };
 const BLUE_MARKER = { color: '#0D47A1', fillColor: '#42A5F5', fillOpacity: 0.9, weight: 2 };
 
@@ -119,8 +119,9 @@ function DualMaps({ currentPt, proposedPt }) {
       </div>
       {/* App.css hides Leaflet's built-in attribution globally */}
       <span className="dash-map-attr">
-        © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors
-        {' '}© <a href="https://carto.com/" target="_blank" rel="noreferrer">CARTO</a>
+        © <a href="https://www.stadiamaps.com/" target="_blank" rel="noreferrer">Stadia Maps</a>
+        {' '}© <a href="https://openmaptiles.org/" target="_blank" rel="noreferrer">OpenMapTiles</a>
+        {' '}© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors
       </span>
     </section>
   );

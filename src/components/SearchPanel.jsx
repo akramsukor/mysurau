@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { formatDistance } from '../utils/overpassApi';
 
 const FILTERS = [
@@ -69,10 +69,10 @@ function SurauCard({ surau, isSelected, onClick }) {
   );
 }
 
-const PEEK_H = 136;   // matches --panel-peek
-const EXPANDED_H = () => Math.round(window.innerHeight * 0.72); // matches --panel-expanded
+const PEEK_H = 136;
+const EXPANDED_H = () => Math.round(window.innerHeight * 0.72);
 
-export default function SearchPanel({
+const SearchPanel = forwardRef(function SearchPanel({
   surauList,
   userLocation,
   searchQuery,
@@ -82,10 +82,14 @@ export default function SearchPanel({
   selectedSurau,
   onSurauSelect,
   loading,
-}) {
+}, ref) {
   const [isExpanded, setIsExpanded] = useState(false);
   const panelRef = useRef(null);
   const dragState = useRef(null);
+
+  useImperativeHandle(ref, () => ({
+    expand: () => setIsExpanded(true),
+  }));
 
   const handlePointerDown = useCallback((e) => {
     const panel = panelRef.current;
@@ -109,7 +113,7 @@ export default function SearchPanel({
 
       const now = Date.now();
       const dt = now - d.lastTime || 1;
-      d.velocity = (ev.clientY - d.lastY) / dt; // positive = moving down (collapsing)
+      d.velocity = (ev.clientY - d.lastY) / dt;
       d.lastY = ev.clientY;
       d.lastTime = now;
 
@@ -125,13 +129,11 @@ export default function SearchPanel({
       const expandedH = EXPANDED_H();
       const midpoint = (PEEK_H + expandedH) / 2;
 
-      // Snap: fast flick wins; otherwise snap to nearest
       let expand;
-      if (d.velocity < -0.4) expand = true;       // fast flick up
-      else if (d.velocity > 0.4) expand = false;  // fast flick down
+      if (d.velocity < -0.4) expand = true;
+      else if (d.velocity > 0.4) expand = false;
       else expand = currentH > midpoint;
 
-      // Restore CSS transition, remove inline height, flip state
       panel.style.transition = '';
       panel.style.height = '';
       setIsExpanded(expand);
@@ -148,13 +150,11 @@ export default function SearchPanel({
     return matchSearch && matchFilter;
   });
 
-
   return (
     <div
       ref={panelRef}
       className={`search-panel ${isExpanded ? 'search-panel--expanded' : ''}`}
     >
-      {/* Drag handle */}
       <div
         className="search-panel__handle"
         onPointerDown={handlePointerDown}
@@ -164,7 +164,6 @@ export default function SearchPanel({
         <div className="search-panel__handle-bar" />
       </div>
 
-      {/* Search input */}
       <div className="search-panel__input-row">
         <div className="search-input-wrap">
           <span className="search-input-icon">🔍</span>
@@ -184,7 +183,6 @@ export default function SearchPanel({
         </div>
       </div>
 
-      {/* Filter tabs */}
       <div className="filter-tabs">
         {FILTERS.map((f) => (
           <button
@@ -198,7 +196,6 @@ export default function SearchPanel({
         <div className="filter-tab-count">{filtered.length} tempat</div>
       </div>
 
-      {/* Results list */}
       <div className="surau-list">
         {loading && (
           <div className="surau-list__loading">
@@ -233,4 +230,6 @@ export default function SearchPanel({
       </div>
     </div>
   );
-}
+});
+
+export default SearchPanel;

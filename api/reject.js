@@ -92,12 +92,22 @@ export default async function handler(req, res) {
     });
     if (auditErr) throw auditErr;
 
-    // Step 5 — Hard-delete the pending_approval row (surau row is NOT touched)
+    // Step 5 — Hard-delete the pending_approval row
     const { error: deleteErr } = await supabaseAdmin
       .from('pending_approval')
       .delete()
       .eq('id', pending.id);
     if (deleteErr) throw deleteErr;
+
+    // Step 6 — For rejected additions, also delete the surau row that was
+    // staged with approved=false. Edits/deletes leave the existing surau intact.
+    if (pending.action === 'request_add') {
+      const { error: surauDeleteErr } = await supabaseAdmin
+        .from('surau')
+        .delete()
+        .eq('id', pending.surau_id);
+      if (surauDeleteErr) throw surauDeleteErr;
+    }
 
     return res.status(200).json({ ok: true });
   } catch (err) {

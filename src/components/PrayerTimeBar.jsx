@@ -1,5 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
+import { useState, useEffect } from 'react';
 import {
   PRAYER_NAMES,
   getCurrentAndNextPrayer,
@@ -17,14 +16,14 @@ function formatCountdown(seconds) {
 
 function formatGregorian(date) {
   return new Intl.DateTimeFormat('en-MY', {
-    day: 'numeric', month: 'long', year: 'numeric',
+    day: 'numeric', month: 'short', year: 'numeric',
   }).format(date);
 }
 
 function formatHijri(date) {
   try {
-    return new Intl.DateTimeFormat('ms-MY-u-ca-islamic', {
-      day: 'numeric', month: 'long', year: 'numeric',
+    return new Intl.DateTimeFormat('en-u-ca-islamic', {
+      day: 'numeric', month: 'short', year: 'numeric',
     }).format(date);
   } catch {
     return '';
@@ -45,21 +44,23 @@ function tomorrow() {
 
 const ALL_PRAYERS = ['fajr', 'syuruk', 'dhuhr', 'asr', 'maghrib', 'isha'];
 
-export default function PrayerTimeBar({ prayerTimes, locationName, zone, zoneCode, onZoneClick }) {
+export default function PrayerTimeBar({
+  prayerTimes,
+  locationName,
+  zoneCode,
+  onRefresh,
+}) {
   const [countdown, setCountdown] = useState(0);
   const [prayerInfo, setPrayerInfo] = useState({ current: null, next: null });
   const [expanded, setExpanded] = useState(false);
   const [tomorrowPrayerTimes, setTomorrowPrayerTimes] = useState(null);
 
-  // Date switcher state inside expanded panel
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedPrayerTimes, setSelectedPrayerTimes] = useState(null);
   const [dateTransitioning, setDateTransitioning] = useState(false);
 
-  const barRef = useRef(null);
   const today = new Date();
 
-  // Update countdown every second
   useEffect(() => {
     if (!prayerTimes) return;
     const update = () => {
@@ -72,7 +73,6 @@ export default function PrayerTimeBar({ prayerTimes, locationName, zone, zoneCod
     return () => clearInterval(interval);
   }, [prayerTimes]);
 
-  // When current prayer is Isyak, next is tomorrow's Subuh — fetch tomorrow's data
   useEffect(() => {
     if (!zoneCode || !prayerInfo.current) return;
     if (prayerInfo.current.key === 'isha') {
@@ -84,7 +84,6 @@ export default function PrayerTimeBar({ prayerTimes, locationName, zone, zoneCod
     }
   }, [prayerInfo.current?.key, zoneCode]);
 
-  // When expanded panel opens, reset to today
   useEffect(() => {
     if (expanded) {
       setSelectedDate(new Date());
@@ -92,7 +91,6 @@ export default function PrayerTimeBar({ prayerTimes, locationName, zone, zoneCod
     }
   }, [expanded, prayerTimes]);
 
-  // Fetch prayer times for selected date in expanded panel
   useEffect(() => {
     if (!expanded || !zoneCode) return;
     if (isSameDay(selectedDate, today)) {
@@ -124,33 +122,43 @@ export default function PrayerTimeBar({ prayerTimes, locationName, zone, zoneCod
   const nextName = prayerInfo.next
     ? PRAYER_NAMES[prayerInfo.next.key]?.ms || prayerInfo.next.key
     : '—';
-  // When next is tomorrow's Subuh, use tomorrow's fajr time instead of today's
   const nextTime = nextIsTomorrow
     ? (to12h(tomorrowPrayerTimes?.fajr) || '—')
     : (to12h(prayerInfo.next?.time) || '—');
 
-  const barBottom = barRef.current?.getBoundingClientRect().bottom ?? 0;
-
   return (
-    <div className="prayer-bar" ref={barRef}>
-      {/* Location + Date row */}
-      <div className="prayer-bar__top">
-        <div className="prayer-bar__location">
-          <span className="prayer-bar__location-icon">📍</span>
-          <div>
-            <div className="prayer-bar__location-name">{locationName}</div>
-            <div className="prayer-bar__zone" onClick={onZoneClick} title="Tukar zon">
-              {zone} <span className="prayer-bar__zone-edit">✏️</span>
-            </div>
-          </div>
-        </div>
-        <div className="prayer-bar__dates">
-          <div className="prayer-bar__gregorian">{formatGregorian(today)}</div>
-          <div className="prayer-bar__hijri">{formatHijri(today)}</div>
+    <>
+      {/* Transparent backdrop — clicking outside collapses the expansion */}
+      {expanded && (
+        <div
+          style={{ position: 'fixed', inset: 0, zIndex: 999 }}
+          onClick={() => setExpanded(false)}
+          aria-hidden="true"
+        />
+      )}
+
+    <div className="prayer-bar">
+      {/* Card header: location + refresh */}
+      <div className="prayer-bar__header">
+        <div className="prayer-bar__location-row">
+          <span className="prayer-bar__location-name">
+            {locationName}
+          </span>
+          <button className="prayer-bar__refresh-btn" onClick={onRefresh} title="Muat Semula">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74" />
+              <polyline points="3 3 3 9 9 9" />
+            </svg>
+          </button>
         </div>
       </div>
 
-      {/* Pill */}
+      {/* Date row */}
+      <div className="prayer-bar__date">
+        {formatGregorian(today)} | {formatHijri(today)}
+      </div>
+
+      {/* Prayer pill */}
       {prayerTimes ? (
         <div className="prayer-pill" onClick={() => setExpanded((v) => !v)}>
           <div className="prayer-pill__side">
@@ -167,56 +175,58 @@ export default function PrayerTimeBar({ prayerTimes, locationName, zone, zoneCod
         <div className="prayer-bar__loading">Memuatkan waktu solat…</div>
       )}
 
-      {/* Expanded panel */}
-      {expanded && prayerTimes && createPortal(
-        <div
-          className="prayer-expand"
-          style={{ top: barBottom }}
-          onClick={() => setExpanded(false)}
-        >
-          {/* Date switcher header */}
-          <div className="prayer-expand__date-nav" onClick={(e) => e.stopPropagation()}>
-            <button className="prayer-expand__chevron" onClick={() => changeDate(-1)}>‹</button>
-            <div className="prayer-expand__date-center">
-              <div className="prayer-expand__date-gregorian">{formatGregorian(selectedDate)}</div>
-              <div className="prayer-expand__date-hijri">{formatHijri(selectedDate)}</div>
+      {/* Inline expanded prayer times */}
+      {prayerTimes && (
+        <div className={`prayer-inline${expanded ? ' prayer-inline--open' : ''}`}>
+          <div className="prayer-inline__inner">
+            {/* Date navigator */}
+            <div className="prayer-inline__date-nav">
+              <button className="prayer-inline__chevron" onClick={() => changeDate(-1)}>‹</button>
+              <div className="prayer-inline__date-text">
+                <div>{formatGregorian(selectedDate)}</div>
+                <div className="prayer-inline__date-hijri">{formatHijri(selectedDate)}</div>
+              </div>
+              <button className="prayer-inline__chevron" onClick={() => changeDate(1)}>›</button>
             </div>
-            <button className="prayer-expand__chevron" onClick={() => changeDate(1)}>›</button>
-          </div>
 
-          {/* Prayer rows */}
-          {selectedPrayerTimes ? (
-            <div style={{ opacity: dateTransitioning ? 0.4 : 1, transition: 'opacity 0.15s ease' }}>
-              {ALL_PRAYERS.map((key) => {
-                const isCurrent = isToday && prayerInfo.current?.key === key;
-                return (
-                  <div
-                    key={key}
-                    className={`prayer-expand__row${isCurrent ? ' prayer-expand__row--current' : ''}`}
-                  >
-                    <span className="prayer-expand__name">
-                      {PRAYER_NAMES[key]?.ms || key}
-                      {isCurrent && (
-                        <span className="prayer-expand__badge">({formatCountdown(countdown)})</span>
-                      )}
-                    </span>
-                    <span className="prayer-expand__time">
-                      {to12h(selectedPrayerTimes[key]) || '—'}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="prayer-expand__loading">Gagal memuatkan waktu solat.</div>
-          )}
+            {/* Prayer rows */}
+            {selectedPrayerTimes ? (
+              <div style={{ opacity: dateTransitioning ? 0.4 : 1, transition: 'opacity 0.15s ease' }}>
+                {ALL_PRAYERS.map((key) => {
+                  const isCurrent = isToday && prayerInfo.current?.key === key;
+                  return (
+                    <div
+                      key={key}
+                      className={`prayer-inline__row${isCurrent ? ' prayer-inline__row--current' : ''}`}
+                    >
+                      <span className="prayer-inline__name">
+                        {PRAYER_NAMES[key]?.ms || key}
+                        {isCurrent && (
+                          <span className="prayer-inline__badge"> ({formatCountdown(countdown)})</span>
+                        )}
+                      </span>
+                      <span className="prayer-inline__time">
+                        {to12h(selectedPrayerTimes[key]) || '—'}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="prayer-inline__loading">Memuatkan…</div>
+            )}
 
-          <div className="prayer-expand__attribution">
-            © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors
+            {/* Collapse ghost button */}
+            <button className="prayer-collapse-btn" onClick={() => setExpanded(false)}>
+              Collapse
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 6, verticalAlign: 'middle' }}>
+                <polyline points="18 15 12 9 6 15" />
+              </svg>
+            </button>
           </div>
-        </div>,
-        document.body
+        </div>
       )}
     </div>
+    </>
   );
 }
